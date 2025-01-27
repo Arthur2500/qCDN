@@ -39,7 +39,16 @@ function passThrough(req, res, next) {
   return next();
 }
 
-const helmetMiddleware = securityEnabled ? helmet() : passThrough;
+const helmetMiddleware = securityEnabled
+  ? helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'", "https://static.cloudflareinsights.com"],
+        },
+      },
+    })
+  : passThrough;
 
 const loginLimiter = securityEnabled
   ? rateLimit({
