@@ -73,7 +73,7 @@ SECURITY=enabled PASSWORDS=your-passwords-here API_KEYS=your-api-key-here node m
 - `API_KEY: [none/$CUSTOM_KEYS]`: If set to "none," API is disabled. Otherwise, Strings separated by commas are used as access tokens. (see [Request Headers](#request-headers))
 
 ## Screenshots
-![Screenshot 2024-08-20 215648](https://github.com/user-attachments/assets/a2d7979e-2f71-4f3f-9063-57128690e62a)
+<img width="1440" alt="image" src="https://github.com/user-attachments/assets/9f0dcea2-200c-43fa-bd06-e40da7b55e19" />
 
 ## API Endpoint
 
