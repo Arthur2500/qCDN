@@ -201,8 +201,14 @@ app.post("/upload", isAuthenticated, createUploadHandler(), (req, res) => {
   const savedFilename = req.file.filename;
   const [hash, ...rest] = savedFilename.split("-");
   const originalName = rest.join("-");
+  const fileSize = req.file.size;
 
-  db.files.push({ hash, originalName, savedFilename });
+  db.files.push({
+    hash,
+    originalName,
+    savedFilename,
+    size: fileSize
+  });
   saveDB();
 
   const fileURL = `https://${DOMAIN}/${hash}/${encodeURIComponent(originalName)}`;
@@ -241,8 +247,14 @@ if (securityEnabled && isApiEnabled) {
     const savedFilename = req.file.filename;
     const [hash, ...rest] = savedFilename.split("-");
     const originalName = rest.join("-");
+    const fileSize = req.file.size;
 
-    db.files.push({ hash, originalName, savedFilename });
+    db.files.push({
+      hash,
+      originalName,
+      savedFilename,
+      size: fileSize
+    });
     saveDB();
 
     const fileURL = `https://${DOMAIN}/${hash}/${encodeURIComponent(originalName)}`;

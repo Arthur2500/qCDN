@@ -1,3 +1,14 @@
+<%
+function formatBytes(bytes, decimals = 2) {
+  if (bytes === 0) return "0 Bytes";
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
+}
+%>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -51,6 +62,7 @@
             <tr>
               <th>Filename</th>
               <th>Link</th>
+              <th>File Size</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -59,10 +71,12 @@
             <tr>
               <td><%= file.originalName %></td>
               <td>
-                <a href="https://<%= domain %>/<%= file.hash %>/<%= encodeURIComponent(file.originalName) %>" target="_blank">
+                <a href="https://<%= domain %>/<%= file.hash %>/<%= encodeURIComponent(file.originalName) %>"
+                   target="_blank">
                   https://<%= domain %>/<%= file.hash %>/<%= file.originalName %>
                 </a>
               </td>
+              <td><%= formatBytes(file.size) %></td>
               <td>
                 <button class="copy-btn"
                         data-url="https://<%= domain %>/<%= file.hash %>/<%= encodeURIComponent(file.originalName) %>">
