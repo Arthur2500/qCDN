@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>qCDN - <%= domain %></title>
+  <meta name="description" content="A lightweight CDN server with a simple frontend & API."/>
+  <link rel="icon" href="/icon/favicon.ico">
+  <link rel="stylesheet" href="/css/styles.css"/>
+</head>
+<body>
+  <header>
+    <div class="header-left"><%= domain %></div>
+    <div class="header-right">
+      <% if (loggedIn) { %>
+        <a href="/logout" class="logout-btn">Logout</a>
+      <% } %>
+    </div>
+  </header>
+
+  <main>
+    <div id="message" class="message" style="display:none;"></div>
+
+    <% if (!loggedIn) { %>
+      <div class="login-container">
+        <h2>Login</h2>
+        <% if (typeof error !== 'undefined') { %>
+          <p class="error"><%= error %></p>
+        <% } %>
+        <form action="/login" method="POST">
+          <input type="password" name="password" placeholder="Passwort" required />
+          <button type="submit">Login</button>
+        </form>
+      </div>
+    <% } else { %>
+      <div class="upload-container">
+        <div id="dropArea" class="drop-area">
+          <p>Dateien hierher ziehen oder klicken zum Hochladen</p>
+          <input type="file" id="fileInput" style="display:none;">
+        </div>
+        <div id="progressBar" class="progress-bar" style="display: none;">
+          <div id="progressBarFill" class="progress-bar-fill"></div>
+        </div>
+        <button id="cancelUploadBtn" class="cancel-upload-btn" style="display: none;">Abbrechen</button>
+      </div>
+
+      <div class="file-list">
+        <h3>Hochgeladene Dateien</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Dateiname</th>
+              <th>Link</th>
+              <th>Aktion</th>
+            </tr>
+          </thead>
+          <tbody>
+          <% files.forEach(function(file) { %>
+            <tr>
+              <td><%= file.originalName %></td>
+              <td>
+                <a href=" https://<%= domain %>/<%= file.hash %>/<%= encodeURIComponent(file.originalName) %>" target="_blank">
+                  https://<%= domain %>/<%= file.hash %>/<%= file.originalName %>
+                </a>
+              </td>
+              <td>
+                <button class="copy-btn"
+                        data-url="https://<%= domain %>/<%= file.hash %>/<%= encodeURIComponent(file.originalName) %>">
+                  Kopieren
+                </button>
+                <button class="delete-btn" data-hash="<%= file.hash %>">Löschen</button>
+              </td>
+            </tr>
+          <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </main>
+
+  <div id="uploadResult" class="upload-result" style="display:none;">
+    <div class="upload-result-content">
+      <p>Upload erfolgreich! Dein Link:</p>
+      <p id="uploadedFileLink"></p>
+      <button id="copyLinkButton">Kopieren</button>
+      <button id="closeResultButton">Schließen</button>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer">
+      <a href="https://github.com/Arthur2500/qCDN" rel="nofollow" target="_blank">Source Code</a>
+    </div>
+  </footer>
+
+  <script src="/js/scripts.js"></script>
+</body>
+</html>

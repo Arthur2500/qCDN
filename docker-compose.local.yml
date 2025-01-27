@@ -1,0 +1,13 @@
+services:
+  qcdn:
+    build: .
+    container_name: qcdn
+    environment:
+      DOMAIN: "http://localhost:3000"
+      PASSWORDS: "secret123,anotherPassword"
+      API_KEYS: "secret123,anotherPassword"
+      SESSION_SECRET: "choose_a_strong_secret_here"
+    volumes:
+      - ./data:/usr/src/app/data
+    ports:
+      - "3000:3000"
