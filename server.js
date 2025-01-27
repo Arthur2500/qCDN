@@ -12,7 +12,10 @@ const crypto = require("crypto");
 
 const app = express();
 
-const securityEnabled = (process.env.SECURITY === "enabled");
+// Aktivieren des Proxy-Supports (wichtig für Cloudflare)
+app.set("trust proxy", 1);
+
+const securityEnabled = process.env.SECURITY === "enabled";
 
 function sanitizeDomain(domain) {
   return domain.replace(/[^a-zA-Z0-9.-]/g, "");
@@ -54,7 +57,7 @@ const loginLimiter = securityEnabled
   ? rateLimit({
       windowMs: 15 * 60 * 1000,
       max: 5,
-      message: "Too many failed login attempts, please try again later."
+      message: "Too many failed login attempts, please try again later.",
     })
   : passThrough;
 
@@ -62,27 +65,35 @@ const apiLimiter = securityEnabled
   ? rateLimit({
       windowMs: 15 * 60 * 1000,
       max: 50,
-      message: "Too many API requests, please try again later."
+      message: "Too many API requests, please try again later.",
     })
   : passThrough;
 
 const csrfProtection = securityEnabled
-  ? csrf({ cookie: true })
+  ? csrf({
+      cookie: {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production", // Secure cookies in production
+        sameSite: "strict",
+      },
+    })
   : passThrough;
 
 app.use(helmetMiddleware);
 app.use(cookieParser());
-app.use(session({
-  secret: SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    httpOnly: true,
-    secure: false,
-    sameSite: "strict",
-    maxAge: 1000 * 60 * 60 * 24 * 14
-  }
-}));
+app.use(
+  session({
+    secret: SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 1000 * 60 * 60 * 24 * 14,
+    },
+  })
+);
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
@@ -137,7 +148,7 @@ app.get("/", csrfProtection, (req, res) => {
     domain: DOMAIN,
     loggedIn: !!req.session.loggedIn,
     files: db.files,
-    csrfToken: securityEnabled ? req.csrfToken() : ""
+    csrfToken: securityEnabled ? req.csrfToken() : "",
   });
 });
 
@@ -152,7 +163,7 @@ app.post("/login", loginLimiter, csrfProtection, (req, res) => {
     loggedIn: false,
     files: [],
     error: "Wrong password",
-    csrfToken: securityEnabled ? req.csrfToken() : ""
+    csrfToken: securityEnabled ? req.csrfToken() : "",
   });
 });
 
@@ -175,14 +186,14 @@ function createUploadHandler() {
       const filename = `${hash}-${file.originalname}`;
       generatedFilename = filename;
       cb(null, filename);
-    }
+    },
   });
 
   const localUpload = multer({
     storage,
   }).single("file");
 
-  return function(req, res, next) {
+  return function (req, res, next) {
     req.on("aborted", () => {
       if (generatedFilename) {
         const partialPath = path.join(UPLOAD_DIR, generatedFilename);
@@ -216,7 +227,7 @@ app.post("/upload", isAuthenticated, createUploadHandler(), (req, res) => {
     hash,
     originalName,
     savedFilename,
-    size: fileSize
+    size: fileSize,
   });
   saveDB();
 
