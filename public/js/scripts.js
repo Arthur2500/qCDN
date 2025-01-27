@@ -66,14 +66,14 @@ document.addEventListener("DOMContentLoaded", function() {
           if (response.success) {
             showUploadResult(response.url);
           } else {
-            showMessage("error", "Upload fehlgeschlagen (Server-Antwort).");
+            showMessage("error", "Upload failed (server response).");
           }
         } catch (err) {
           console.error(err);
-          showMessage("error", "Upload fehlgeschlagen (ungültige JSON-Antwort).");
+          showMessage("error", "Upload failed (invalid JSON response).");
         }
       } else {
-        showMessage("error", "Upload fehlgeschlagen (Serverfehler).");
+        showMessage("error", "Upload failed (server error).");
       }
     };
 
@@ -83,7 +83,7 @@ document.addEventListener("DOMContentLoaded", function() {
       progressBarFill.style.width = "0%";
       cancelUploadBtn.style.display = "none";
       fileInput.value = "";
-      showMessage("error", "Upload fehlgeschlagen (Netzwerkfehler).");
+      showMessage("error", "Upload failed (network error).");
     };
 
     xhr.send(formData);
@@ -95,7 +95,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     copyLinkButton.onclick = () => {
       navigator.clipboard.writeText(url).then(() => {
-        showMessage("success", "Link kopiert!");
+        showMessage("success", "Link copied!");
       });
     };
 
@@ -116,7 +116,7 @@ document.addEventListener("DOMContentLoaded", function() {
       cancelUploadBtn.style.display = "none";
       fileInput.value = "";
       dropArea.classList.remove("drag-over");
-      showMessage("info", "Upload abgebrochen.");
+      showMessage("info", "Upload canceled.");
     });
   }
 
@@ -158,7 +158,7 @@ document.addEventListener("DOMContentLoaded", function() {
     btn.addEventListener("click", (e) => {
       const url = e.target.dataset.url;
       navigator.clipboard.writeText(url).then(() => {
-        showMessage("success", "Link kopiert!");
+        showMessage("success", "Link copied!");
       });
     });
   });
@@ -171,15 +171,15 @@ document.addEventListener("DOMContentLoaded", function() {
         .then(response => response.json())
         .then(data => {
           if (data.success) {
-            showMessage("success", "Datei gelöscht.");
+            showMessage("success", "File deleted.");
             window.location.reload();
           } else {
-            showMessage("error", "Konnte Datei nicht löschen: " + data.message);
+            showMessage("error", "Failed to delete file: " + data.message);
           }
         })
         .catch(err => {
           console.error(err);
-          showMessage("error", "Fehler beim Löschen der Datei.");
+          showMessage("error", "Error deleting file.");
         });
     });
   });

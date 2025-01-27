@@ -45,7 +45,7 @@ const loginLimiter = securityEnabled
   ? rateLimit({
       windowMs: 15 * 60 * 1000,
       max: 5,
-      message: "Zu viele fehlgeschlagene Login-Versuche, bitte später erneut versuchen."
+      message: "Too many failed login attempts, please try again later."
     })
   : passThrough;
 
@@ -53,7 +53,7 @@ const apiLimiter = securityEnabled
   ? rateLimit({
       windowMs: 15 * 60 * 1000,
       max: 50,
-      message: "Zu viele API-Requests, bitte später erneut versuchen."
+      message: "Too many API requests, please try again later."
     })
   : passThrough;
 
@@ -83,6 +83,15 @@ app.use(express.static(path.join(__dirname, "public")));
 
 const UPLOAD_DIR = path.join(__dirname, "data/uploads");
 const DB_FILE = path.join(__dirname, "data/db.json");
+
+if (!fs.existsSync(UPLOAD_DIR)) {
+  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+}
+
+if (!fs.existsSync(DB_FILE)) {
+  fs.writeFileSync(DB_FILE, JSON.stringify({ files: [] }, null, 2), "utf-8");
+}
+
 let db = { files: [] };
 
 function loadDB() {
@@ -103,7 +112,7 @@ function isAuthenticated(req, res, next) {
   if (req.session && req.session.loggedIn) {
     return next();
   }
-  return res.status(403).send("Nicht autorisiert. Bitte einloggen.");
+  return res.status(403).send("Unauthorized. Please log in.");
 }
 
 function isApiAuthenticated(req, res, next) {
@@ -133,7 +142,7 @@ app.post("/login", loginLimiter, csrfProtection, (req, res) => {
     domain: DOMAIN,
     loggedIn: false,
     files: [],
-    error: "Falsches Passwort",
+    error: "Wrong password",
     csrfToken: securityEnabled ? req.csrfToken() : ""
   });
 });
@@ -170,7 +179,7 @@ function createUploadHandler() {
         const partialPath = path.join(UPLOAD_DIR, generatedFilename);
         if (fs.existsSync(partialPath)) {
           fs.unlinkSync(partialPath);
-          console.log(`Abgebrochener Upload gelöscht: ${partialPath}`);
+          console.log(`Aborted upload deleted: ${partialPath}`);
         }
       }
     });
@@ -205,7 +214,7 @@ app.delete("/delete/:hash", isAuthenticated, (req, res) => {
   const { hash } = req.params;
   const fileIndex = db.files.findIndex((f) => f.hash === hash);
   if (fileIndex === -1) {
-    return res.status(404).json({ success: false, message: "Nicht gefunden" });
+    return res.status(404).json({ success: false, message: "Not found" });
   }
 
   const fileToDelete = db.files[fileIndex];
@@ -245,7 +254,7 @@ if (securityEnabled && isApiEnabled) {
     const { hash } = req.params;
     const fileIndex = db.files.findIndex((f) => f.hash === hash);
     if (fileIndex === -1) {
-      return res.status(404).json({ success: false, message: "Nicht gefunden" });
+      return res.status(404).json({ success: false, message: "Not found" });
     }
 
     const fileToDelete = db.files[fileIndex];
@@ -268,18 +277,18 @@ app.get("/:hash/:filename", (req, res) => {
   const { hash, filename } = req.params;
   const fileEntry = db.files.find((f) => f.hash === hash && f.originalName === filename);
   if (!fileEntry) {
-    return res.status(404).send("Datei nicht gefunden");
+    return res.status(404).send("File not found");
   }
 
   const filePath = path.join(UPLOAD_DIR, fileEntry.savedFilename);
   if (!fs.existsSync(filePath)) {
-    return res.status(404).send("Datei nicht (mehr) vorhanden");
+    return res.status(404).send("File no longer exists");
   }
   return res.sendFile(filePath);
 });
 
 const PORT = 3000;
 app.listen(PORT, () => {
-  console.log(`CDN-App läuft auf Port ${PORT} (http://localhost:${PORT})`);
+  console.log(`qCDN running on port ${PORT} (http://localhost:${PORT})`);
   console.log(`Security Enabled? ${securityEnabled}`);
 });

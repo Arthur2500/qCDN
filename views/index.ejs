@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -28,30 +28,30 @@
           <p class="error"><%= error %></p>
         <% } %>
         <form action="/login" method="POST">
-          <input type="password" name="password" placeholder="Passwort" required />
+          <input type="password" name="password" placeholder="Password" required />
           <button type="submit">Login</button>
         </form>
       </div>
     <% } else { %>
       <div class="upload-container">
         <div id="dropArea" class="drop-area">
-          <p>Dateien hierher ziehen oder klicken zum Hochladen</p>
+          <p>Drag files here or click to upload</p>
           <input type="file" id="fileInput" style="display:none;">
         </div>
         <div id="progressBar" class="progress-bar" style="display: none;">
           <div id="progressBarFill" class="progress-bar-fill"></div>
         </div>
-        <button id="cancelUploadBtn" class="cancel-upload-btn" style="display: none;">Abbrechen</button>
+        <button id="cancelUploadBtn" class="cancel-upload-btn" style="display: none;">Cancel</button>
       </div>
 
       <div class="file-list">
-        <h3>Hochgeladene Dateien</h3>
+        <h3>Uploaded Files</h3>
         <table>
           <thead>
             <tr>
-              <th>Dateiname</th>
+              <th>Filename</th>
               <th>Link</th>
-              <th>Aktion</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>
@@ -59,16 +59,16 @@
             <tr>
               <td><%= file.originalName %></td>
               <td>
-                <a href=" https://<%= domain %>/<%= file.hash %>/<%= encodeURIComponent(file.originalName) %>" target="_blank">
+                <a href="https://<%= domain %>/<%= file.hash %>/<%= encodeURIComponent(file.originalName) %>" target="_blank">
                   https://<%= domain %>/<%= file.hash %>/<%= file.originalName %>
                 </a>
               </td>
               <td>
                 <button class="copy-btn"
                         data-url="https://<%= domain %>/<%= file.hash %>/<%= encodeURIComponent(file.originalName) %>">
-                  Kopieren
+                  Copy
                 </button>
-                <button class="delete-btn" data-hash="<%= file.hash %>">Löschen</button>
+                <button class="delete-btn" data-hash="<%= file.hash %>">Delete</button>
               </td>
             </tr>
           <% }); %>
@@ -80,10 +80,10 @@
 
   <div id="uploadResult" class="upload-result" style="display:none;">
     <div class="upload-result-content">
-      <p>Upload erfolgreich! Dein Link:</p>
+      <p>Upload successful! Your link:</p>
       <p id="uploadedFileLink"></p>
-      <button id="copyLinkButton">Kopieren</button>
-      <button id="closeResultButton">Schließen</button>
+      <button id="copyLinkButton">Copy</button>
+      <button id="closeResultButton">Close</button>
     </div>
   </div>
 
