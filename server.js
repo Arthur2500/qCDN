@@ -1,7 +1,6 @@
 const express = require("express");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
-const csrf = require("csurf");
 const session = require("express-session");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
@@ -69,16 +68,6 @@ const apiLimiter = securityEnabled
     })
   : passThrough;
 
-const csrfProtection = securityEnabled
-  ? csrf({
-      cookie: {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production", // Secure cookies in production
-        sameSite: "strict",
-      },
-    })
-  : passThrough;
-
 app.use(helmetMiddleware);
 app.use(cookieParser());
 app.use(
@@ -143,16 +132,15 @@ function isApiAuthenticated(req, res, next) {
   return res.status(403).json({ success: false, message: "Invalid API token" });
 }
 
-app.get("/", csrfProtection, (req, res) => {
+app.get("/", (req, res) => {
   res.render("index", {
     domain: DOMAIN,
     loggedIn: !!req.session.loggedIn,
     files: db.files,
-    csrfToken: securityEnabled ? req.csrfToken() : "",
   });
 });
 
-app.post("/login", loginLimiter, csrfProtection, (req, res) => {
+app.post("/login", loginLimiter, (req, res) => {
   const { password } = req.body;
   if (PASSWORDS.includes(password)) {
     req.session.loggedIn = true;
@@ -163,7 +151,6 @@ app.post("/login", loginLimiter, csrfProtection, (req, res) => {
     loggedIn: false,
     files: [],
     error: "Wrong password",
-    csrfToken: securityEnabled ? req.csrfToken() : "",
   });
 });
 
