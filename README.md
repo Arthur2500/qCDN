@@ -51,48 +51,63 @@ For improved security, set environment variable SECURITY=enabled if exclusively 
 SECURITY=enabled node main.js
 ```
 
-API authentication key is also passed via environment variable
+Frontend authentication key is also passed via environment variable
 ```
-API_KEY=your-api-key-here node main.js
+PASSWORDS=your-passwords-here node main.js
 ```
 
-Or both
+API authentication key is also passed via environment variable
 ```
-SECURITY=enabled API_KEY=your-api-key-here node main.js
+API_KEYS=your-api-key-here node main.js
+```
+
+Or all 3
+```
+SECURITY=enabled PASSWORDS=your-passwords-here API_KEYS=your-api-key-here node main.js
 ```
 
 ## Configuration
 `docker-compose.yml` Environment Settings:
 - `SECURITY: [enabled/disabled]`: Enable/Disable Security features such as Ratelimiting for API and Helmet header protection
-- `API_KEY: [none/$CUSTOM_KEY]`: If set to "none," no API authorization is used. Otherwise, the custom string is used as the API key. (see [Request Headers](#request-headers))
+- `PASSWORDS: [$PASSWORDS]`: Secure the frontend via these comma separated passwords
+- `API_KEY: [none/$CUSTOM_KEYS]`: If set to "none," API is disabled. Otherwise, Strings separated by commas are used as access tokens. (see [Request Headers](#request-headers))
 
 ## Screenshots
 ![Screenshot 2024-08-20 215648](https://github.com/user-attachments/assets/a2d7979e-2f71-4f3f-9063-57128690e62a)
 
 ## API Endpoint
 
-Endpoint: `/api/upload`
+### Endpoint: `/api/upload`###
 
 Method: `POST`
 
-Description: Upload and convert a video file to a specified format, resolution, frame rate, and bitrate.
+Description: Allows authenticated users to upload files via the API and receive a URL for accessing the uploaded file.
 
 #### Request Headers
 
-- `Authorization`: API key (if required).
+- `x-api-token`: API token for authentication.
 
 #### Request Body
 
-- `video`: Video file to upload (multipart/form-data).
-- `format`: Output format (`mp4`, `avi`, `mkv`, `webm`, `mov`).
-- `resolution`: Output resolution, percentage of original resolution in steps of 10, value must be between 50 and 100 (e.g. `80` for 80% of original resolution).
-- `fps`: Frame rate in steps of 1, value must be between 15 and 60 (e.g., `30` for 30 FPS).
-- `bitrate`: Video bitrate in kbps in steps of 100, value must be between 1000 and 10000 (e.g., `1000` for 1000 kbps).
+- `file`: File to upload (multipart/form-data).
 
 #### Response
 
-- **Success**: Downloads the converted video file.
-- **Failure**: JSON with an error message.
+- **Success**: Returns a JSON object containing the uploaded file's URL:
+```json
+{
+"success": true,
+"url": "https://example.com/<hash>/<originalName>"
+}
+```
+
+- **Failure**: Returns a JSON object with an error message:
+```json
+{
+"success": false,
+"message": "Error message"
+}
+```
 
 ### Examples
 
@@ -100,13 +115,8 @@ Description: Upload and convert a video file to a specified format, resolution, 
 
 ```sh
 curl -X POST http://localhost:3000/api/upload \
-  -H "Authorization: YOUR_API_KEY" \
-  -F "video=@/path/to/your/video.mp4" \
-  -F "format=mp4" \
-  -F "resolution=80" \
-  -F "fps=30" \
-  -F "bitrate=1000" \
-  -OJ
+  -H "x-api-token: YOUR_API_TOKEN" \
+  -F "file=@/path/to/your/file.txt"
 ```
 
 #### Python Example
@@ -115,23 +125,77 @@ curl -X POST http://localhost:3000/api/upload \
 import requests
 
 url = "http://localhost:3000/api/upload"
-headers = {"Authorization": "YOUR_API_KEY"}
-files = {"video": open("/path/to/your/video.mp4", "rb")}
-data = {
-    "format": "mp4",
-    "resolution": "80",
-    "fps": "30",
-    "bitrate": "1000"
-}
+headers = {"x-api-token": "YOUR_API_TOKEN"}
+files = {"file": open("/path/to/your/file.txt", "rb")}
 
-response = requests.post(url, headers=headers, files=files, data=data)
+response = requests.post(url, headers=headers, files=files)
 
 if response.status_code == 200:
-    content_disposition = response.headers.get('Content-Disposition')
-    filename = content_disposition.split("filename=")[-1].strip('"')
-    with open(filename, "wb") as f:
-        f.write(response.content)
-    print(f"Video converted successfully and saved as {filename}!")
+    data = response.json()
+    if data.get("success"):
+        print("File uploaded successfully:", data["url"])
+    else:
+        print("Error:", data)
 else:
-    print("Error:", response.json())
+    print("Error:", response.text)
+```
+
+### Endpoint: `/api/delete/:hash` ###
+
+Method: `DELETE`
+
+Description: Allows authenticated users to delete an uploaded file by specifying its hash.
+
+#### Request Headers
+
+- `x-api-token`: API token for authentication.
+
+#### Request Body
+
+- None.
+
+#### Response
+
+- **Success**: Returns a JSON object indicating the file was deleted:
+```json
+{
+  "success": true
+}
+```
+
+- **Failure**: Returns a JSON object with an error message:
+```json
+{
+"success": false,
+"message": "Error message"
+}
+```
+
+### Examples
+
+#### `curl` Example
+
+```sh
+curl -X DELETE http://localhost:3000/api/delete/<hash> \
+  -H "x-api-token: YOUR_API_TOKEN"
+```
+
+#### Python Example
+
+```python
+import requests
+
+url = "http://localhost:3000/api/delete/<hash>"
+headers = {"x-api-token": "YOUR_API_TOKEN"}
+
+response = requests.delete(url, headers=headers)
+
+if response.status_code == 200:
+    data = response.json()
+    if data.get("success"):
+        print("File deleted successfully")
+    else:
+        print("Error:", data)
+else:
+    print("Error:", response.text)
 ```
