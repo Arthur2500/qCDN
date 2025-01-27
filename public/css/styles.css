@@ -1,0 +1,202 @@
+html {
+  box-sizing: border-box;
+}
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f0f0f0;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  background: #333;
+  color: #fff;
+  padding: 1rem;
+}
+
+.header-left {
+  font-weight: bold;
+}
+
+.header-right a {
+  color: #fff;
+  text-decoration: none;
+  margin-left: 1rem;
+}
+
+main {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: auto;
+}
+
+#message {
+  width: 90%;
+  max-width: 600px;
+  margin: 1rem auto;
+  padding: 1rem;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.login-container {
+  max-width: 300px;
+  margin: 2rem auto;
+  background: #fff;
+  padding: 1rem;
+  border-radius: 4px;
+}
+
+.login-container .error {
+  color: red;
+  margin-bottom: 1rem;
+}
+
+.login-container input[type="password"] {
+  width: 100%;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.upload-container {
+  margin-bottom: 2rem;
+}
+
+.drop-area {
+  border: 2px dashed #666;
+  padding: 2rem;
+  text-align: center;
+  background: #fff;
+  cursor: pointer;
+}
+
+.drop-area.drag-over {
+  border-color: #3399ff;
+  background: #eef6ff;
+}
+
+.progress-bar {
+  width: 100%;
+  background: #ccc;
+  height: 20px;
+  margin-top: 1rem;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: #3399ff;
+  width: 0;
+}
+
+.cancel-upload-btn {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.3rem 0.6rem;
+  background: #f00;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.file-list {
+  background: #fff;
+  padding: 1rem;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+.file-list table {
+  min-width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.file-list table th:nth-child(1),
+.file-list table td:nth-child(1) {
+  width: 20%;
+}
+
+.file-list table th:nth-child(2),
+.file-list table td:nth-child(2) {
+  width: 70%;
+}
+
+.file-list table th:nth-child(3),
+.file-list table td:nth-child(3) {
+  width: 10%;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.file-list th,
+.file-list td {
+  padding: 0.5rem;
+  border-bottom: 1px solid #ccc;
+  text-align: left;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.file-list a {
+  color: #3399ff;
+  text-decoration: none;
+}
+
+.copy-btn,
+.delete-btn {
+  margin-right: 0.5rem;
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+  border-radius: 4px;
+  border: none;
+  background: #ccc;
+}
+
+.upload-result {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+}
+
+.upload-result-content {
+  background: #fff;
+  width: 300px;
+  margin: 10% auto;
+  padding: 1rem;
+  text-align: center;
+  border-radius: 4px;
+}
+
+.upload-result-content p {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+}
+
+footer {
+  display: flex;
+  justify-content: space-evenly;
+  background: #333;
+  color: #fff;
+  padding: 1rem;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+}
+
+.footer a {
+  color: #fff;
+  text-decoration: none;
+  margin-left: 1rem;
+}
