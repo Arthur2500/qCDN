@@ -126,11 +126,16 @@ main {
 
 .file-list table th:nth-child(2),
 .file-list table td:nth-child(2) {
-  width: 70%;
+  width: 60%;
 }
 
 .file-list table th:nth-child(3),
 .file-list table td:nth-child(3) {
+  width: 10%;
+}
+
+.file-list table th:nth-child(4),
+.file-list table td:nth-child(4) {
   width: 10%;
   white-space: nowrap;
   text-align: center;
