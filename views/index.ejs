@@ -104,9 +104,21 @@ function formatBytes(bytes, decimals = 2) {
   </div>
 
   <footer>
-    <div class="footer">
-      <a href="https://github.com/Arthur2500/qCDN" rel="nofollow" target="_blank">Source Code</a>
-    </div>
+    <footer>
+      <div class="footer">
+        <% if (privacyLink) { %>
+          <a href="<%= privacyLink %>" target="_blank" rel="nofollow">Privacy</a>
+        <% } %>
+        <% if (termsLink) { %>
+          <a href="<%= termsLink %>" target="_blank" rel="nofollow">Terms</a>
+        <% } %>
+        <% if (imprintLink) { %>
+          <a href="<%= imprintLink %>" target="_blank" rel="nofollow">Imprint</a>
+        <% } %>
+        <a href="https://github.com/Arthur2500/qCDN" rel="nofollow" target="_blank">Source Code</a>
+      </div>
+    </footer>
+
   </footer>
 
   <script src="/js/scripts.js"></script>

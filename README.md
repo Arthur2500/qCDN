@@ -66,9 +66,16 @@ Header elements which will be placed in the `<head>` of the page:
 HEAD_TAGS='<link rel="stylesheet" href="https://cdn.example.com/styles.css">,<script src="https://cdn.example.com/script.js"></script>'
 ```
 
+Links which will be placed in the footer
+```
+PRIVACY_LINK=https://example.com/privacy
+TERMS_LINK=https://example.com/terms
+IMPRINT_LINK=https://example.com/imprint
+```
+
 Or all 3
 ```
-SECURITY=enabled PASSWORDS=your-passwords-here API_KEYS=your-api-key-here HEAD_TAGS='<link rel="stylesheet" href="https://cdn.example.com/styles.css">,<script src="https://cdn.example.com/script.js"></script>' node main.js
+SECURITY=enabled PASSWORDS=your-passwords-here API_KEYS=your-api-key-here HEAD_TAGS='<link rel="stylesheet" href="https://cdn.example.com/styles.css">,<script src="https://cdn.example.com/script.js"></script>' PRIVACY_LINK=https://example.com/privacy TERMS_LINK=https://example.com/terms IMPRINT_LINK=https://example.com/imprint node main.js
 ```
 
 ## Configuration
@@ -77,6 +84,9 @@ SECURITY=enabled PASSWORDS=your-passwords-here API_KEYS=your-api-key-here HEAD_T
 - `PASSWORDS: [$PASSWORDS]`: Secure the frontend via these comma separated passwords
 - `API_KEY: [none/$CUSTOM_KEYS]`: If set to "none," API is disabled. Otherwise, Strings separated by commas are used as access tokens. (see [Request Headers](#request-headers))
 - `HEAD_TAGS=<link rel="stylesheet" href="https://cdn.example.com/styles.css">,<script src="https://cdn.example.com/script.js"></script>`: If set, comma separated HTML tags will be imported into the `<head>` element of the page
+- `PRIVACY_LINK=https://example.com/privacy`: Privacy link which the "Privacy" element in the footer will redirect to
+- `TERMS_LINK=https://example.com/terms`: TOS link which the "Terms" element in the footer will redirect to
+- `IMPRINT_LINK=https://example.com/imprint`: Imprint link which the "Imprint" element in the footer will redirect to
 
 
 ## Screenshots

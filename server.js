@@ -22,6 +22,10 @@ function sanitizeDomain(domain) {
 const RAW_DOMAIN = process.env.DOMAIN || "";
 const DOMAIN = sanitizeDomain(RAW_DOMAIN);
 
+const PRIVACY_LINK = process.env.PRIVACY_LINK || null;
+const TERMS_LINK = process.env.TERMS_LINK || null;
+const IMPRINT_LINK = process.env.IMPRINT_LINK || null;
+
 const PASSWORDS = (process.env.PASSWORDS || "")
   .split(",")
   .map((p) => p.trim())
@@ -143,6 +147,9 @@ app.get("/", (req, res) => {
     loggedIn: !!req.session.loggedIn,
     files: db.files,
     headTags: HEAD_TAGS,
+    privacyLink: PRIVACY_LINK,
+    termsLink: TERMS_LINK,
+    imprintLink: IMPRINT_LINK,
   });
 });
 
@@ -316,6 +323,9 @@ app.use((req, res, next) => {
   res.status(404).render("404", {
     domain: DOMAIN,
     headTags: HEAD_TAGS,
+    privacyLink: PRIVACY_LINK,
+    termsLink: TERMS_LINK,
+    imprintLink: IMPRINT_LINK,
   });
 });
 
