@@ -7,6 +7,7 @@ services:
       PASSWORDS: "secret123,anotherPassword"
       API_KEYS: "secret123,anotherPassword"
       SESSION_SECRET: "choose_a_strong_secret_here"
+      HEAD_TAGS: '<link rel="stylesheet" href="https://cdn.example.com/styles.css">,<script src="https://cdn.example.com/script.js"></script>'
     volumes:
       - ./data:/usr/src/app/data
     ports:
