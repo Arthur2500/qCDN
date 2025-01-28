@@ -16,15 +16,26 @@
   </header>
 
   <main>
-    <h1>404 - Page Not Found</h1>
-    <p>Oops! The page you're looking for doesn't exist.</p>
-    <a href="/" class="back-home">Go back to home</a>
+    <div class="login-container">
+      <h1>404 - Page Not Found</h1>
+      <p>Oops! The page you're looking for doesn't exist.</p>
+    </div>
   </main>
 
   <footer>
     <div class="footer">
+      <% if (privacyLink) { %>
+        <a href="<%= privacyLink %>" target="_blank" rel="nofollow">Privacy</a>
+      <% } %>
+      <% if (termsLink) { %>
+        <a href="<%= termsLink %>" target="_blank" rel="nofollow">Terms</a>
+      <% } %>
+      <% if (imprintLink) { %>
+        <a href="<%= imprintLink %>" target="_blank" rel="nofollow">Imprint</a>
+      <% } %>
       <a href="https://github.com/Arthur2500/qCDN" rel="nofollow" target="_blank">Source Code</a>
     </div>
   </footer>
+
 </body>
 </html>
