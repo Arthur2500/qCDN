@@ -11,7 +11,6 @@ const crypto = require("crypto");
 
 const app = express();
 
-// Aktivieren des Proxy-Supports (wichtig für Cloudflare)
 app.set("trust proxy", 1);
 
 const securityEnabled = process.env.SECURITY === "enabled";
@@ -32,6 +31,12 @@ const API_KEYS = (process.env.API_KEYS || "")
   .split(",")
   .map((t) => t.trim())
   .filter(Boolean);
+
+const HEAD_TAGS = (process.env.HEAD_TAGS || "")
+  .split(",")
+  .map((tag) => tag.trim())
+  .filter(Boolean)
+  .join("\n");
 
 const isApiEnabled = API_KEYS.length > 0 && API_KEYS[0].toLowerCase() !== "none";
 
@@ -137,6 +142,7 @@ app.get("/", (req, res) => {
     domain: DOMAIN,
     loggedIn: !!req.session.loggedIn,
     files: db.files,
+    headTags: HEAD_TAGS,
   });
 });
 
@@ -304,6 +310,13 @@ app.get("/:hash/:filename", (req, res) => {
     return res.status(404).send("File no longer exists");
   }
   return res.sendFile(filePath);
+});
+
+app.use((req, res, next) => {
+  res.status(404).render("404", {
+    domain: DOMAIN,
+    headTags: HEAD_TAGS,
+  });
 });
 
 const PORT = 3000;
