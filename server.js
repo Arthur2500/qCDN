@@ -68,7 +68,7 @@ function extractScriptDomains(headTags) {
   return Array.from(scriptDomains);
 }
 
-const dynamicScriptUrls = extractScriptUrls(HEAD_TAGS);
+const dynamicScriptDomains = extractScriptDomains(HEAD_TAGS);
 
 const helmetMiddleware = securityEnabled
   ? helmet({
