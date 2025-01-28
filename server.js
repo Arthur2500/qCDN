@@ -81,6 +81,10 @@ const helmetMiddleware = securityEnabled
             "https://static.cloudflareinsights.com",
             ...dynamicScriptDomains,
           ],
+          connectSrc: [
+            "'self'",
+            ...dynamicScriptDomains,
+          ],
         },
       },
     })
