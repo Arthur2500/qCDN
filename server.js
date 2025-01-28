@@ -67,6 +67,7 @@ const dynamicScriptUrls = extractScriptUrls(HEAD_TAGS);
 
 const helmetMiddleware = securityEnabled
   ? helmet({
+      crossOriginEmbedderPolicy: false,
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
