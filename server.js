@@ -51,16 +51,21 @@ function passThrough(req, res, next) {
   return next();
 }
 
-function extractScriptUrls(headTags) {
+function extractScriptDomains(headTags) {
   const $ = cheerio.load(`<head>${headTags}</head>`);
-  const scriptUrls = [];
+  const scriptDomains = new Set();
   $("script[src]").each((_, elem) => {
     const src = $(elem).attr("src");
     if (src) {
-      scriptUrls.push(src);
+      try {
+        const url = new URL(src);
+        scriptDomains.add(`${url.protocol}//${url.host}`);
+      } catch (err) {
+        console.error(`Invalid URL in HEAD_TAGS: ${src}`);
+      }
     }
   });
-  return scriptUrls;
+  return Array.from(scriptDomains);
 }
 
 const dynamicScriptUrls = extractScriptUrls(HEAD_TAGS);
@@ -74,7 +79,7 @@ const helmetMiddleware = securityEnabled
           scriptSrc: [
             "'self'",
             "https://static.cloudflareinsights.com",
-            ...dynamicScriptUrls,
+            ...dynamicScriptDomains,
           ],
         },
       },
