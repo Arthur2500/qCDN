@@ -8,6 +8,7 @@ const fs = require("fs");
 const path = require("path");
 const multer = require("multer");
 const crypto = require("crypto");
+const cheerio = require("cheerio");
 
 const app = express();
 
@@ -50,12 +51,30 @@ function passThrough(req, res, next) {
   return next();
 }
 
+function extractScriptUrls(headTags) {
+  const $ = cheerio.load(`<head>${headTags}</head>`);
+  const scriptUrls = [];
+  $("script[src]").each((_, elem) => {
+    const src = $(elem).attr("src");
+    if (src) {
+      scriptUrls.push(src);
+    }
+  });
+  return scriptUrls;
+}
+
+const dynamicScriptUrls = extractScriptUrls(HEAD_TAGS);
+
 const helmetMiddleware = securityEnabled
   ? helmet({
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          scriptSrc: ["'self'", "https://static.cloudflareinsights.com"],
+          scriptSrc: [
+            "'self'",
+            "https://static.cloudflareinsights.com",
+            ...dynamicScriptUrls,
+          ],
         },
       },
     })
