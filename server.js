@@ -193,6 +193,10 @@ app.post("/login", loginLimiter, (req, res) => {
     loggedIn: false,
     files: [],
     error: "Wrong password",
+    headTags: HEAD_TAGS,
+    privacyLink: PRIVACY_LINK,
+    termsLink: TERMS_LINK,
+    imprintLink: IMPRINT_LINK,
   });
 });
 
