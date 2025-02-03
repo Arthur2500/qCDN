@@ -19,7 +19,7 @@ function formatBytes(bytes, decimals = 2) {
   <link rel="icon" href="/icon/favicon.ico">
   <link rel="stylesheet" href="/css/styles.css"/>
   <meta name="robots" content="all">
-  <%- headTags %>
+  <%- headTags || "" %>
 </head>
 <body>
   <header>
@@ -63,6 +63,7 @@ function formatBytes(bytes, decimals = 2) {
           <thead>
             <tr>
               <th>Filename</th>
+              <th>Uploaded at</th>
               <th>Link</th>
               <th>File Size</th>
               <th>Action</th>
@@ -72,6 +73,7 @@ function formatBytes(bytes, decimals = 2) {
           <% files.forEach(function(file) { %>
             <tr>
               <td><%= file.originalName %></td>
+              <td><%= file.uploadedAt ? new Date(file.uploadedAt).toLocaleString() : '' %></td>
               <td>
                 <a href="https://<%= domain %>/<%= file.hash %>/<%= encodeURIComponent(file.originalName) %>"
                    target="_blank">

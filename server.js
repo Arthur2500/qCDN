@@ -193,6 +193,10 @@ app.post("/login", loginLimiter, (req, res) => {
     loggedIn: false,
     files: [],
     error: "Wrong password",
+    headTags: HEAD_TAGS,
+    privacyLink: PRIVACY_LINK,
+    termsLink: TERMS_LINK,
+    imprintLink: IMPRINT_LINK,
   });
 });
 
@@ -257,6 +261,7 @@ app.post("/upload", isAuthenticated, createUploadHandler(), (req, res) => {
     originalName,
     savedFilename,
     size: fileSize,
+    uploadedAt: new Date().toISOString(),
   });
   saveDB();
 
@@ -302,7 +307,8 @@ if (securityEnabled && isApiEnabled) {
       hash,
       originalName,
       savedFilename,
-      size: fileSize
+      size: fileSize,
+      uploadedAt: new Date().toISOString(),
     });
     saveDB();
 

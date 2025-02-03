@@ -126,16 +126,21 @@ main {
 
 .file-list table th:nth-child(2),
 .file-list table td:nth-child(2) {
-  width: 40%;
+  width: 10%;
 }
 
 .file-list table th:nth-child(3),
 .file-list table td:nth-child(3) {
-  width: 9%;
+  width: 30%;
 }
 
 .file-list table th:nth-child(4),
 .file-list table td:nth-child(4) {
+  width: 9%;
+}
+
+.file-list table th:nth-child(5),
+.file-list table td:nth-child(5) {
   width: 11%;
   word-wrap: normal;
   text-align: center;
