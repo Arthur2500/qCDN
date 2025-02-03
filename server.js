@@ -174,7 +174,7 @@ app.get("/", (req, res) => {
   res.render("index", {
     domain: DOMAIN,
     loggedIn: !!req.session.loggedIn,
-    files: db.files,
+    files: db.files.slice().reverse(),
     headTags: HEAD_TAGS,
     privacyLink: PRIVACY_LINK,
     termsLink: TERMS_LINK,
