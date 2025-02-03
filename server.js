@@ -257,6 +257,7 @@ app.post("/upload", isAuthenticated, createUploadHandler(), (req, res) => {
     originalName,
     savedFilename,
     size: fileSize,
+    uploadedAt: new Date().toISOString(),
   });
   saveDB();
 
@@ -302,7 +303,8 @@ if (securityEnabled && isApiEnabled) {
       hash,
       originalName,
       savedFilename,
-      size: fileSize
+      size: fileSize,
+      uploadedAt: new Date().toISOString(),
     });
     saveDB();
 
