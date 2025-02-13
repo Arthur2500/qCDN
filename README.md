@@ -90,8 +90,8 @@ SECURITY=enabled PASSWORDS=your-passwords-here API_KEYS=your-api-key-here HEAD_T
 
 
 ## Screenshots
-![image](https://github.com/user-attachments/assets/889b04fe-f7de-40e7-b2a3-d684040a9965)
-![image](https://github.com/user-attachments/assets/42841d7d-88f7-432d-b353-f92e3e2c0815)
+![Bildschirmfoto 2025-02-13 um 13 44 56](https://github.com/user-attachments/assets/1b613775-4f23-404c-adde-f0ac2d70970f)
+![Bildschirmfoto 2025-02-13 um 13 44 40](https://github.com/user-attachments/assets/ddf5159e-7224-4198-ace2-ab18c48cc57e)
 
 ## API Endpoint
 

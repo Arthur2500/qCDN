@@ -172,7 +172,9 @@ document.addEventListener("DOMContentLoaded", function() {
         .then(data => {
           if (data.success) {
             showMessage("success", "File deleted.");
-            window.location.reload();
+            setTimeout(() => {
+              window.location.reload();
+            }, 5000);
           } else {
             showMessage("error", "Failed to delete file: " + data.message);
           }
