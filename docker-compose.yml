@@ -3,7 +3,9 @@ services:
     image: ghcr.io/arthur2500/qcdn:latest
     container_name: qcdn
     environment:
-      DOMAIN: "http://localhost:3000"
+      DOMAIN: "localhost"
+      USE_HTTPS: "false"
+      PORT: 3000
       PASSWORDS: "secret123,anotherPassword"
       API_KEYS: "secret123,anotherPassword"
       SESSION_SECRET: "choose_a_strong_secret_here"

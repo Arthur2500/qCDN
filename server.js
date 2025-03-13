@@ -17,10 +17,12 @@ app.set("trust proxy", 1);
 const securityEnabled = process.env.SECURITY === "enabled";
 
 function sanitizeDomain(domain) {
-  return domain.replace(/[^a-zA-Z0-9.-]/g, "");
+  return domain.replace(/[^a-zA-Z0-9.-:]/g, "");
 }
 
-const RAW_DOMAIN = process.env.DOMAIN || "";
+const protocol = process.env.USE_HTTPS === "true" ? "https" : "http";
+const PORT = process.env.PORT || 3000;
+const RAW_DOMAIN = process.env.DOMAIN === "localhost" ? `localhost:${PORT}` : process.env.DOMAIN;
 const DOMAIN = sanitizeDomain(RAW_DOMAIN);
 
 const PRIVACY_LINK = process.env.PRIVACY_LINK || null;
@@ -175,6 +177,7 @@ app.get("/", (req, res) => {
     domain: DOMAIN,
     loggedIn: !!req.session.loggedIn,
     files: db.files.slice().reverse(),
+    totalStorage: db.files.reduce((sum, file) => sum + file.size, 0),
     headTags: HEAD_TAGS,
     privacyLink: PRIVACY_LINK,
     termsLink: TERMS_LINK,
@@ -265,7 +268,7 @@ app.post("/upload", isAuthenticated, createUploadHandler(), (req, res) => {
   });
   saveDB();
 
-  const fileURL = `https://${DOMAIN}/${hash}/${encodeURIComponent(originalName)}`;
+  const fileURL = `${protocol}://${DOMAIN}/${hash}/${encodeURIComponent(originalName)}`;
   console.log(`File uploaded: ${originalName}, URL: ${fileURL}`);
   return res.json({ success: true, url: fileURL });
 });
@@ -364,7 +367,6 @@ app.use((req, res, next) => {
   });
 });
 
-const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`qCDN running on port ${PORT} (http://localhost:${PORT})`);
   console.log(`Security Enabled? ${securityEnabled}`);
