@@ -17,7 +17,7 @@ app.set("trust proxy", 1);
 const securityEnabled = process.env.SECURITY === "enabled";
 
 function sanitizeDomain(domain) {
-  return domain.replace(/[^a-zA-Z0-9.-:]/g, "");
+  return domain.replace(/[^a-zA-Z0-9.-]/g, "");
 }
 
 const protocol = process.env.USE_HTTPS === "true" ? "https" : "http";
