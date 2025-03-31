@@ -41,7 +41,6 @@ docker-compose -f docker-compose.local.yml up -d --build
 #### Requirements:
 ```
 Node.js >= 16
-ffmpeg
 ```
 
 #### Clone Repository
