@@ -24,6 +24,9 @@
 
   <footer>
     <div class="footer">
+      <% if (loggedIn) { %>
+        <a href="/api-docs">API Docs</a>
+      <% } %>
       <% if (privacyLink) { %>
         <a href="<%= privacyLink %>" target="_blank" rel="nofollow">Privacy</a>
       <% } %>

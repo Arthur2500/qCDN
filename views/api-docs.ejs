@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Docs - <%= domain %></title>
+    <meta name="description" content="A lightweight CDN server with a simple frontend & API."/>
+    <link rel="icon" href="/icon/favicon.ico">
+    <link rel="stylesheet" href="/css/styles.css"/>
+    <meta name="robots" content="noindex, nofollow">
+    <%- headTags || "" %>
+  </head>
+<body>
+  <header>
+    <div class="header-left"><%= domain %> - API Docs</div>
+    <div class="header-right">
+      <a href="/">Home</a>
+      <a href="/logout">Logout</a>
+    </div>
+  </header>
+
+  <main>
+    <h2>API Endpoints</h2>
+
+    <!-- /api/upload -->
+    <section>
+      <h3>/api/upload</h3>
+      <p><strong>Method:</strong> POST</p>
+      <p><strong>Headers:</strong> <code>x-api-token</code></p>
+      <p><strong>Body:</strong> <code>file</code> (multipart/form-data)</p>
+
+      <h4>Example curl</h4>
+      <% apiKeys.forEach(function(key) { %>
+  <pre><code>curl -X POST <%= protocol %>://<%= domain %>/api/upload \
+    -H "x-api-token: <%= key %>" \
+    -F "file=@/path/to/your/file.txt"</code></pre>
+      <% }) %>
+
+      <h4>Example Python</h4>
+      <% apiKeys.forEach(function(key) { %>
+  <pre><code>import requests
+
+  url = "<%= protocol %>://<%= domain %>/api/upload"
+  headers = {"x-api-token": "<%= key %>"}
+  files = {"file": open("/path/to/your/file.txt", "rb")}
+
+  response = requests.post(url, headers=headers, files=files)
+  if response.status_code == 200:
+      data = response.json()
+      if data.get("success"):
+          print("File uploaded successfully:", data["url"])
+      else:
+          print("Error:", data)
+  else:
+      print("Error:", response.text)</code></pre>
+      <% }) %>
+
+      <h4>Example JavaScript (Node.js)</h4>
+      <% apiKeys.forEach(function(key) { %>
+  <pre><code>const fs = require('fs');
+  const axios = require('axios');
+  const FormData = require('form-data');
+
+  const form = new FormData();
+  form.append('file', fs.createReadStream('path/to/your/file.txt'));
+
+  axios.post('<%= protocol %>://<%= domain %>/api/upload', form, {
+    headers: {
+      ...form.getHeaders(),
+      'x-api-token': '<%= key %>'
+    }
+  })
+  .then(res => console.log("Uploaded:", res.data.url))
+  .catch(err => console.error("Error:", err.response?.data || err.message));</code></pre>
+      <% }) %>
+    </section>
+
+    <!-- /api/delete/:hash -->
+    <section>
+      <h3>/api/delete/:hash</h3>
+      <p><strong>Method:</strong> DELETE</p>
+      <p><strong>Headers:</strong> <code>x-api-token</code></p>
+
+      <h4>Example curl</h4>
+      <% apiKeys.forEach(function(key) { %>
+  <pre><code>curl -X DELETE <%= protocol %>://<%= domain %>/api/delete/&lt;hash&gt; \
+    -H "x-api-token: <%= key %>"</code></pre>
+      <% }) %>
+
+      <h4>Example Python</h4>
+      <% apiKeys.forEach(function(key) { %>
+  <pre><code>import requests
+
+  url = "<%= protocol %>://<%= domain %>/api/delete/&lt;hash&gt;"
+  headers = {"x-api-token": "<%= key %>"}
+
+  response = requests.delete(url, headers=headers)
+  if response.status_code == 200:
+      data = response.json()
+      if data.get("success"):
+          print("File deleted")
+      else:
+          print("Error:", data)
+  else:
+      print("Error:", response.text)</code></pre>
+      <% }) %>
+
+      <h4>Example JavaScript (Node.js)</h4>
+      <% apiKeys.forEach(function(key) { %>
+  <pre><code>const axios = require('axios');
+
+  const hash = "PUT_FILE_HASH_HERE";
+
+  axios.delete('<%= protocol %>://<%= domain %>/api/delete/${hash}', {
+    headers: {
+      'x-api-token': '<%= key %>'
+    }
+  })
+  .then(res => console.log("File deleted"))
+  .catch(err => console.error("Error:", err.response?.data || err.message));</code></pre>
+      <% }) %>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer">
+      <% if (loggedIn) { %>
+        <a href="/api-docs">API Docs</a>
+      <% } %>
+      <% if (privacyLink) { %>
+        <a href="<%= privacyLink %>" target="_blank" rel="nofollow">Privacy</a>
+      <% } %>
+      <% if (termsLink) { %>
+        <a href="<%= termsLink %>" target="_blank" rel="nofollow">Terms</a>
+      <% } %>
+      <% if (imprintLink) { %>
+        <a href="<%= imprintLink %>" target="_blank" rel="nofollow">Imprint</a>
+      <% } %>
+      <a href="https://github.com/Arthur2500/qCDN" rel="nofollow" target="_blank">Source Code</a>
+    </div>
+  </footer>
+</body>
+</html>

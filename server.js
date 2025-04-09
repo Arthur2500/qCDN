@@ -20,7 +20,7 @@ function sanitizeDomain(domain) {
   return domain.replace(/[^a-zA-Z0-9.-]/g, "");
 }
 
-const protocol = process.env.USE_HTTPS === "true" ? "https" : "http";
+const PROTOCOL = process.env.USE_HTTPS === "true" ? "https" : "http";
 const PORT = process.env.PORT || 3000;
 const RAW_DOMAIN = process.env.DOMAIN === "localhost" ? `localhost:${PORT}` : process.env.DOMAIN;
 const DOMAIN = sanitizeDomain(RAW_DOMAIN);
@@ -61,7 +61,7 @@ function extractScriptDomains(headTags) {
     if (src) {
       try {
         const url = new URL(src);
-        scriptDomains.add(`${url.protocol}//${url.host}`);
+        scriptDomains.add(`${url.PROTOCOL}//${url.host}`);
       } catch (err) {
         console.error(`Invalid URL in HEAD_TAGS: ${src}`);
       }
@@ -210,6 +210,19 @@ app.get("/logout", (req, res) => {
   });
 });
 
+app.get("/api-docs", isAuthenticated, (req, res) => {
+  res.render("api-docs", {
+    domain: DOMAIN,
+    protocol: PROTOCOL,
+    loggedIn: !!req.session.loggedIn,
+    apiKeys: API_KEYS,
+    headTags: HEAD_TAGS,
+    privacyLink: PRIVACY_LINK,
+    termsLink: TERMS_LINK,
+    imprintLink: IMPRINT_LINK,
+  });
+});
+
 function createUploadHandler() {
   let generatedFilename = null;
 
@@ -268,7 +281,7 @@ app.post("/upload", isAuthenticated, createUploadHandler(), (req, res) => {
   });
   saveDB();
 
-  const fileURL = `${protocol}://${DOMAIN}/${hash}/${encodeURIComponent(originalName)}`;
+  const fileURL = `${PROTOCOL}://${DOMAIN}/${hash}/${encodeURIComponent(originalName)}`;
   console.log(`File uploaded: ${originalName}, URL: ${fileURL}`);
   return res.json({ success: true, url: fileURL });
 });
@@ -293,8 +306,10 @@ app.delete("/delete/:hash", isAuthenticated, (req, res) => {
   return res.json({ success: true });
 });
 
-if (securityEnabled && isApiEnabled) {
-  app.use("/api", apiLimiter);
+if (isApiEnabled) {
+  if (securityEnabled) {
+    app.use("/api", apiLimiter);
+  }
 
   app.post("/api/upload", isApiAuthenticated, createUploadHandler(), (req, res) => {
     if (!req.file) {
