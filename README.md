@@ -1,4 +1,4 @@
-[![Docker Image CI](https://github.com/Arthur2500/qCDN/actions/workflows/docker-image.yml/badge.svg)](https://github.com/Arthur2500/qCDN/actions/workflows/docker-image.yml)
+[![Docker Image CI](https://github.com/Arthur2500/qCDN/actions/workflows/docker-image-prod.yml/badge.svg)](https://github.com/Arthur2500/qCDN/actions/workflows/docker-image-prod.yml)
 
 # qCDN <img src="https://github.com/Arthur2500/qCDN/raw/main/public/icon/favicon.ico" alt="Icon" width="32"/>
 A lightweight CDN server with a simple frontend & API.
