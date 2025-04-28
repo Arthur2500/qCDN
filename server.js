@@ -375,6 +375,7 @@ app.get("/:hash/:filename", (req, res) => {
 app.use((req, res, next) => {
   res.status(404).render("404", {
     domain: DOMAIN,
+    loggedIn: !!req.session.loggedIn,
     headTags: HEAD_TAGS,
     privacyLink: PRIVACY_LINK,
     termsLink: TERMS_LINK,
