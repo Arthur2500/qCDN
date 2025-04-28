@@ -61,7 +61,7 @@ function extractScriptDomains(headTags) {
     if (src) {
       try {
         const url = new URL(src);
-        scriptDomains.add(`${url.PROTOCOL}//${url.host}`);
+        scriptDomains.add(`${url.protocol}//${url.host}`);
       } catch (err) {
         console.error(`Invalid URL in HEAD_TAGS: ${src}`);
       }
