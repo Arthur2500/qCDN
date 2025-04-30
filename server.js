@@ -17,19 +17,19 @@ app.set("trust proxy", 1);
 const securityEnabled = process.env.SECURITY === "enabled";
 
 function sanitizeDomain(domain) {
-  return domain.replace(/[^a-zA-Z0-9.-]/g, "");
+  return domain.replace(/[^a-zA-Z0-9.:-]/g, "");
 }
 
 const PROTOCOL = process.env.USE_HTTPS === "true" ? "https" : "http";
 const PORT = process.env.PORT || 3000;
-const RAW_DOMAIN = process.env.DOMAIN === "localhost" ? `localhost:${PORT}` : process.env.DOMAIN;
-const DOMAIN = sanitizeDomain(RAW_DOMAIN);
+const RAW_DOMAIN = process.env.DOMAIN || "localhost";
+const DOMAIN = sanitizeDomain(RAW_DOMAIN === "localhost" ? `localhost:${PORT}` : RAW_DOMAIN);
 
 const PRIVACY_LINK = process.env.PRIVACY_LINK || null;
 const TERMS_LINK = process.env.TERMS_LINK || null;
 const IMPRINT_LINK = process.env.IMPRINT_LINK || null;
 
-const PASSWORDS = (process.env.PASSWORDS || "")
+const PASSWORDS = (process.env.PASSWORDS || "password")
   .split(",")
   .map((p) => p.trim())
   .filter(Boolean);
@@ -45,7 +45,7 @@ const HEAD_TAGS = (process.env.HEAD_TAGS || "")
   .filter(Boolean)
   .join("\n");
 
-const isApiEnabled = API_KEYS.length > 0 && API_KEYS[0].toLowerCase() !== "none";
+const API_ENABLED = API_KEYS.length > 0 && API_KEYS[0].toLowerCase() !== "none";
 
 const SESSION_SECRET = process.env.SESSION_SECRET || "CHANGE_THIS_TO_A_LONG_RANDOM_STRING";
 
@@ -117,7 +117,7 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.USE_HTTPS === "true",
       sameSite: "strict",
       maxAge: 1000 * 60 * 60 * 24 * 14,
     },
@@ -132,6 +132,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 const UPLOAD_DIR = path.join(__dirname, "data/uploads");
 const DB_FILE = path.join(__dirname, "data/db.json");
+const LOCK_FILE = path.join(__dirname, "data/db.lock");
 
 if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
@@ -143,16 +144,40 @@ if (!fs.existsSync(DB_FILE)) {
 
 let db = { files: [] };
 
-function loadDB() {
-  if (!fs.existsSync(DB_FILE)) {
-    fs.writeFileSync(DB_FILE, JSON.stringify({ files: [] }, null, 2), "utf-8");
+function acquireLock() {
+  while (fs.existsSync(LOCK_FILE)) {
+    console.log("Waiting for lock to be released...");
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 100);
   }
-  const raw = fs.readFileSync(DB_FILE, "utf-8");
-  db = JSON.parse(raw);
+  fs.writeFileSync(LOCK_FILE, "locked", "utf-8");
+}
+
+function releaseLock() {
+  if (fs.existsSync(LOCK_FILE)) {
+    fs.unlinkSync(LOCK_FILE);
+  }
+}
+
+function loadDB() {
+  acquireLock();
+  try {
+    if (!fs.existsSync(DB_FILE)) {
+      fs.writeFileSync(DB_FILE, JSON.stringify({ files: [] }, null, 2), "utf-8");
+    }
+    const raw = fs.readFileSync(DB_FILE, "utf-8");
+    db = JSON.parse(raw);
+  } finally {
+    releaseLock();
+  }
 }
 
 function saveDB() {
-  fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), "utf-8");
+  acquireLock();
+  try {
+    fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), "utf-8");
+  } finally {
+    releaseLock();
+  }
 }
 
 loadDB();
@@ -306,7 +331,7 @@ app.delete("/delete/:hash", isAuthenticated, (req, res) => {
   return res.json({ success: true });
 });
 
-if (isApiEnabled) {
+if (API_ENABLED) {
   if (securityEnabled) {
     app.use("/api", apiLimiter);
   }
