@@ -22,14 +22,14 @@ function sanitizeDomain(domain) {
 
 const PROTOCOL = process.env.USE_HTTPS === "true" ? "https" : "http";
 const PORT = process.env.PORT || 3000;
-const RAW_DOMAIN = process.env.DOMAIN === "localhost" ? `localhost:${PORT}` : process.env.DOMAIN;
-const DOMAIN = sanitizeDomain(RAW_DOMAIN);
+const RAW_DOMAIN = process.env.DOMAIN || "localhost";
+const DOMAIN = sanitizeDomain(RAW_DOMAIN === "localhost" ? `localhost:${PORT}` : RAW_DOMAIN);
 
 const PRIVACY_LINK = process.env.PRIVACY_LINK || null;
 const TERMS_LINK = process.env.TERMS_LINK || null;
 const IMPRINT_LINK = process.env.IMPRINT_LINK || null;
 
-const PASSWORDS = (process.env.PASSWORDS || "")
+const PASSWORDS = (process.env.PASSWORDS || "password")
   .split(",")
   .map((p) => p.trim())
   .filter(Boolean);
@@ -45,7 +45,7 @@ const HEAD_TAGS = (process.env.HEAD_TAGS || "")
   .filter(Boolean)
   .join("\n");
 
-const isApiEnabled = API_KEYS.length > 0 && API_KEYS[0].toLowerCase() !== "none";
+const API_ENABLED = API_KEYS.length > 0 && API_KEYS[0].toLowerCase() !== "none";
 
 const SESSION_SECRET = process.env.SESSION_SECRET || "CHANGE_THIS_TO_A_LONG_RANDOM_STRING";
 
@@ -331,7 +331,7 @@ app.delete("/delete/:hash", isAuthenticated, (req, res) => {
   return res.json({ success: true });
 });
 
-if (isApiEnabled) {
+if (API_ENABLED) {
   if (securityEnabled) {
     app.use("/api", apiLimiter);
   }
