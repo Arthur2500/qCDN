@@ -132,6 +132,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 const UPLOAD_DIR = path.join(__dirname, "data/uploads");
 const DB_FILE = path.join(__dirname, "data/db.json");
+const LOCK_FILE = path.join(__dirname, "data/db.lock");
 
 if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
@@ -143,16 +144,40 @@ if (!fs.existsSync(DB_FILE)) {
 
 let db = { files: [] };
 
-function loadDB() {
-  if (!fs.existsSync(DB_FILE)) {
-    fs.writeFileSync(DB_FILE, JSON.stringify({ files: [] }, null, 2), "utf-8");
+function acquireLock() {
+  while (fs.existsSync(LOCK_FILE)) {
+    console.log("Waiting for lock to be released...");
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 100);
   }
-  const raw = fs.readFileSync(DB_FILE, "utf-8");
-  db = JSON.parse(raw);
+  fs.writeFileSync(LOCK_FILE, "locked", "utf-8");
+}
+
+function releaseLock() {
+  if (fs.existsSync(LOCK_FILE)) {
+    fs.unlinkSync(LOCK_FILE);
+  }
+}
+
+function loadDB() {
+  acquireLock();
+  try {
+    if (!fs.existsSync(DB_FILE)) {
+      fs.writeFileSync(DB_FILE, JSON.stringify({ files: [] }, null, 2), "utf-8");
+    }
+    const raw = fs.readFileSync(DB_FILE, "utf-8");
+    db = JSON.parse(raw);
+  } finally {
+    releaseLock();
+  }
 }
 
 function saveDB() {
-  fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), "utf-8");
+  acquireLock();
+  try {
+    fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), "utf-8");
+  } finally {
+    releaseLock();
+  }
 }
 
 loadDB();
