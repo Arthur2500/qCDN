@@ -200,6 +200,7 @@ function isApiAuthenticated(req, res, next) {
 app.get("/", (req, res) => {
   res.render("index", {
     domain: DOMAIN,
+    protocol: PROTOCOL,
     loggedIn: !!req.session.loggedIn,
     files: db.files.slice().reverse(),
     totalStorage: db.files.reduce((sum, file) => sum + file.size, 0),

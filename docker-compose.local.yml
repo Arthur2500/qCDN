@@ -9,7 +9,7 @@ services:
       PASSWORDS: "secret123,anotherPassword"
       API_KEYS: "secret123,anotherPassword"
       SESSION_SECRET: "choose_a_strong_secret_here"
-      SECURITY: enabled
+      SECURITY: disabled
       NODE_ENV: production
       HEAD_TAGS: '<link rel="stylesheet" href="https://cdn.example.com/styles.css">,<script src="https://cdn.example.com/script.js"></script>'
       PRIVACY_LINK: 'https://example.com/privacy'

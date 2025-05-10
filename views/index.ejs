@@ -75,15 +75,13 @@ function formatBytes(bytes, decimals = 2) {
               <td><%= file.originalName %></td>
               <td><%= file.uploadedAt ? new Date(file.uploadedAt).toLocaleString() : '' %></td>
               <td>
-                <a href="https://<%= domain %>/<%= file.hash %>/<%= encodeURIComponent(file.originalName) %>"
-                   target="_blank">
-                  https://<%= domain %>/<%= file.hash %>/<%= file.originalName %>
-                </a>
+                <a href="<%= protocol %>://<%= domain %>/<%= file.hash %>/<%= encodeURIComponent(file.originalName) %>" target="_blank">
+                <%= protocol %>://<%= domain %>/<%= file.hash %>/<%= file.originalName %>
+               </a>
               </td>
               <td><%= formatBytes(file.size) %></td>
               <td>
-                <button class="copy-btn"
-                        data-url="https://<%= domain %>/<%= file.hash %>/<%= encodeURIComponent(file.originalName) %>">
+                <button class="copy-btn" data-url="<%= protocol %>://<%= domain %>/<%= file.hash %>/<%= encodeURIComponent(file.originalName) %>">
                   Copy
                 </button>
                 <button class="delete-btn" data-hash="<%= file.hash %>">Delete</button>
