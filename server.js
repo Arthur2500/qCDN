@@ -198,6 +198,7 @@ function isApiAuthenticated(req, res, next) {
 }
 
 app.get("/", (req, res) => {
+  loadDB();
   res.render("index", {
     domain: DOMAIN,
     protocol: PROTOCOL,
@@ -289,6 +290,7 @@ function createUploadHandler() {
 }
 
 app.post("/upload", isAuthenticated, createUploadHandler(), (req, res) => {
+  loadDB();
   if (!req.file) {
     return res.status(400).json({ success: false, message: "No file provided" });
   }
@@ -313,6 +315,7 @@ app.post("/upload", isAuthenticated, createUploadHandler(), (req, res) => {
 });
 
 app.delete("/delete/:hash", isAuthenticated, (req, res) => {
+  loadDB();
   const { hash } = req.params;
   const fileIndex = db.files.findIndex((f) => f.hash === hash);
   if (fileIndex === -1) {
@@ -338,6 +341,7 @@ if (API_ENABLED) {
   }
 
   app.post("/api/upload", isApiAuthenticated, createUploadHandler(), (req, res) => {
+    loadDB();
     if (!req.file) {
       return res.status(400).json({ success: false, message: "No file provided" });
     }
@@ -362,6 +366,7 @@ if (API_ENABLED) {
   });
 
   app.delete("/api/delete/:hash", isApiAuthenticated, (req, res) => {
+    loadDB();
     const { hash } = req.params;
     const fileIndex = db.files.findIndex((f) => f.hash === hash);
     if (fileIndex === -1) {
@@ -385,6 +390,7 @@ if (API_ENABLED) {
 }
 
 app.get("/:hash/:filename", (req, res) => {
+  loadDB();
   const { hash, filename } = req.params;
   const fileEntry = db.files.find((f) => f.hash === hash && f.originalName === filename);
   if (!fileEntry) {
