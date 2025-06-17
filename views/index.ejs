@@ -110,12 +110,12 @@ function formatBytes(bytes, decimals = 2) {
             <tr>
               <td><%= share.hash %></td>
               <td><%= share.createdAt ? new Date(share.createdAt).toLocaleString() : '' %></td>
-              <td><%= share.used ? 'Yes' : 'No' %></td>
               <td>
                 <a href="<%= protocol %>://<%= domain %>/<%= share.hash %>" target="_blank">
                   <%= protocol %>://<%= domain %>/<%= share.hash %>
                 </a>
               </td>
+              <td><%= share.used ? 'Yes' : 'No' %></td>
               <td>
                 <button class="copy-reverse-btn" data-url="<%= protocol %>://<%= domain %>/<%= share.hash %>">Copy</button>
                 <button class="delete-reverse-btn" data-hash="<%= share.hash %>">Delete</button>
