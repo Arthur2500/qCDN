@@ -22,7 +22,7 @@
       <div class="upload-result" style="display:block;background:none;position:relative;height:auto;">
         <div class="upload-result-content">
           <p>Upload successful! Download link:</p>
-          <p id="uploadedFileLink"><a href="<%= fileURL %>" target="_blank"><%= fileURL %></a></p>
+          <p><a id="uploadedFileLink" href="<%= fileURL %>" target="_blank"><%= fileURL %></a></p>
           <button id="copyLinkButton">Copy</button>
         </div>
       </div>
@@ -55,9 +55,6 @@
     </div>
   </footer>
 
-  <script>
-    const hash = "<%= hash || '' %>";
-  </script>
-  <script src="/js/reverse-upload.js"></script>
+  <script src="/js/reverse-share.js"></script>
 </body>
 </html>

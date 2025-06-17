@@ -120,6 +120,88 @@
   .catch(err => console.error("Error:", err.response?.data || err.message));</code></pre>
       <% }) %>
     </section>
+
+    <!-- /api/reverse-share -->
+<section>
+  <h3>/api/reverse-share</h3>
+  <p><strong>Method:</strong> POST</p>
+  <p><strong>Headers:</strong> <code>x-api-token</code></p>
+  <p><strong>Response:</strong> <code>{ success: true, url: "https://<%= domain %>/<hash>" }</code></p>
+
+  <h4>Example curl</h4>
+  <% apiKeys.forEach(function(key) { %>
+<pre><code>curl -X POST <%= protocol %>://<%= domain %>/api/reverse-share \
+  -H "x-api-token: <%= key %>"</code></pre>
+  <% }) %>
+
+  <h4>Example Python</h4>
+  <% apiKeys.forEach(function(key) { %>
+<pre><code>import requests
+
+url = "<%= protocol %>://<%= domain %>/api/reverse-share"
+headers = {"x-api-token": "<%= key %>"}
+
+response = requests.post(url, headers=headers)
+print(response.json())</code></pre>
+  <% }) %>
+
+  <h4>Example JavaScript (Node.js)</h4>
+  <% apiKeys.forEach(function(key) { %>
+<pre><code>const axios = require('axios');
+
+axios.post('<%= protocol %>://<%= domain %>/api/reverse-share', {}, {
+  headers: { 'x-api-token': '<%= key %>' }
+})
+.then(res => console.log("Reverse link:", res.data.url))
+.catch(err => console.error("Error:", err.response?.data || err.message));</code></pre>
+  <% }) %>
+</section>
+
+    <!-- /api/delete/r/:hash -->
+<section>
+  <h3>/api/delete/r/:hash</h3>
+  <p><strong>Method:</strong> DELETE</p>
+  <p><strong>Headers:</strong> <code>x-api-token</code></p>
+
+  <h4>Example curl</h4>
+  <% apiKeys.forEach(function(key) { %>
+<pre><code>curl -X DELETE <%= protocol %>://<%= domain %>/api/delete/r/&lt;hash&gt; \
+  -H "x-api-token: <%= key %>"</code></pre>
+  <% }) %>
+
+  <h4>Example Python</h4>
+  <% apiKeys.forEach(function(key) { %>
+<pre><code>import requests
+
+url = "<%= protocol %>://<%= domain %>/api/delete/r/&lt;hash&gt;"
+headers = {"x-api-token": "<%= key %>"}
+
+response = requests.delete(url, headers=headers)
+if response.status_code == 200:
+    data = response.json()
+    if data.get("success"):
+        print("Reverse share deleted")
+    else:
+        print("Error:", data)
+else:
+    print("Error:", response.text)</code></pre>
+  <% }) %>
+
+  <h4>Example JavaScript (Node.js)</h4>
+  <% apiKeys.forEach(function(key) { %>
+<pre><code>const axios = require('axios');
+
+const hash = "PUT_REVERSE_SHARE_HASH_HERE";
+
+axios.delete('<%= protocol %>://<%= domain %>/api/delete/r/${hash}', {
+  headers: {
+    'x-api-token': '<%= key %>'
+  }
+})
+.then(res => console.log("Reverse share deleted"))
+.catch(err => console.error("Error:", err.response?.data || err.message));</code></pre>
+  <% }) %>
+</section>
   </main>
 
   <footer>

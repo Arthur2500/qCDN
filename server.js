@@ -214,6 +214,7 @@ app.get("/", (req, res) => {
     protocol: PROTOCOL,
     loggedIn: !!req.session.loggedIn,
     files: db.files.slice().reverse(),
+    reverseShares: db.reverseShares.slice().reverse(),
     totalStorage: db.files.reduce((sum, file) => sum + file.size, 0),
     headTags: HEAD_TAGS,
     privacyLink: PRIVACY_LINK,
@@ -384,7 +385,7 @@ app.get("/:hash", (req, res, next) => {
     });
   }
 
-  return res.render("reverse-upload", {
+  return res.render("reverse-share", {
     domain: DOMAIN,
     hash,
     headTags: HEAD_TAGS,
@@ -394,13 +395,12 @@ app.get("/:hash", (req, res, next) => {
   });
 });
 
-// Route: POST /:hash (Public Upload)
 app.post("/:hash", createUploadHandler(), (req, res) => {
   loadDB();
   const { hash } = req.params;
-  const reverseShare = db.reverseShares.find((e) => e.hash === hash && !e.used);
+  const reverseShareIndex = db.reverseShares.findIndex((e) => e.hash === hash && !e.used);
 
-  if (!reverseShare) {
+  if (reverseShareIndex === -1) {
     return res.status(410).send("Gone or invalid");
   }
 
@@ -420,12 +420,14 @@ app.post("/:hash", createUploadHandler(), (req, res) => {
     size: fileSize,
     uploadedAt: new Date().toISOString(),
   });
-  reverseShare.used = true;
+
+  // Entferne das benutzte Reverse Share direkt aus der JSON
+  db.reverseShares.splice(reverseShareIndex, 1);
   saveDB();
 
   const fileURL = `${PROTOCOL}://${DOMAIN}/${fileHash}/${encodeURIComponent(originalName)}`;
 
-  return res.render("reverse-upload", {
+  return res.render("reverse-share", {
     domain: DOMAIN,
     hash: null,
     fileURL,
@@ -434,6 +436,25 @@ app.post("/:hash", createUploadHandler(), (req, res) => {
     termsLink: TERMS_LINK,
     imprintLink: IMPRINT_LINK,
   });
+});
+
+app.delete('/delete/r/:hash', isAuthenticated, (req, res) => {
+  loadDB();
+  const { hash } = req.params;
+  const reverseShareIndex = db.reverseShares.findIndex((share) => share.hash === hash);
+
+  if (reverseShareIndex === -1) {
+    return res.status(404).json({ success: false, message: 'Reverse share not found' });
+  }
+
+  const reverseShare = db.reverseShares[reverseShareIndex];
+
+  // Entferne das Reverse Share aus der JSON
+  db.reverseShares.splice(reverseShareIndex, 1);
+  saveDB();
+
+  console.log(`Reverse share deleted: ${reverseShare.hash}`);
+  return res.json({ success: true });
 });
 
 if (API_ENABLED) {
@@ -487,7 +508,6 @@ if (API_ENABLED) {
     return res.json({ success: true });
   });
 
-  // API: POST /api/reverse-share
   app.post("/api/reverse-share", isApiAuthenticated, (req, res) => {
     loadDB();
     const hash = generateReverseShareHash();
@@ -496,37 +516,23 @@ if (API_ENABLED) {
     return res.json({ success: true, url: `${PROTOCOL}://${DOMAIN}/${hash}` });
   });
 
-  // API: POST /api/:hash (upload via reverse link)
-  app.post("/api/:hash", isApiAuthenticated, createUploadHandler(), (req, res) => {
+  app.delete('/api/delete/r/:hash', isApiAuthenticated, (req, res) => {
     loadDB();
     const { hash } = req.params;
-    const reverseShare = db.reverseShares.find((e) => e.hash === hash && !e.used);
+    const reverseShareIndex = db.reverseShares.findIndex((share) => share.hash === hash);
 
-    if (!reverseShare) {
-      return res.status(410).json({ success: false, message: "Link invalid or used" });
+    if (reverseShareIndex === -1) {
+      return res.status(404).json({ success: false, message: 'Reverse share not found' });
     }
 
-    if (!req.file) {
-      return res.status(400).json({ success: false, message: "No file provided" });
-    }
+    const reverseShare = db.reverseShares[reverseShareIndex];
 
-    const savedFilename = req.file.filename;
-    const [fileHash, ...rest] = savedFilename.split("-");
-    const originalName = rest.join("-");
-    const fileSize = req.file.size;
-
-    db.files.push({
-      hash: fileHash,
-      originalName,
-      savedFilename,
-      size: fileSize,
-      uploadedAt: new Date().toISOString(),
-    });
-    reverseShare.used = true;
+    // Entferne das Reverse Share aus der JSON
+    db.reverseShares.splice(reverseShareIndex, 1);
     saveDB();
 
-    const fileURL = `${PROTOCOL}://${DOMAIN}/${fileHash}/${encodeURIComponent(originalName)}`;
-    return res.json({ success: true, url: fileURL });
+    console.log(`API: Reverse share deleted: ${reverseShare.hash}`);
+    return res.json({ success: true });
   });
 } else {
   console.log("API is disabled due to missing or invalid API_KEYS.");

@@ -162,7 +162,9 @@ main {
 }
 
 .copy-btn,
-.delete-btn {
+.delete-btn,
+.copy-reverse-btn,
+.delete-reverse-btn {
   margin: 0.25rem;
   padding: 0.3rem 0.6rem;
   cursor: pointer;
