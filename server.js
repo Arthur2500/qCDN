@@ -182,6 +182,16 @@ function saveDB() {
 
 loadDB();
 
+// Migrate DB
+if (!db.reverseShares) {
+  db.reverseShares = [];
+  saveDB();
+}
+
+function generateReverseShareHash() {
+  return crypto.randomBytes(16).toString("hex");
+}
+
 function isAuthenticated(req, res, next) {
   if (req.session && req.session.loggedIn) {
     return next();
@@ -204,6 +214,7 @@ app.get("/", (req, res) => {
     protocol: PROTOCOL,
     loggedIn: !!req.session.loggedIn,
     files: db.files.slice().reverse(),
+    reverseShares: db.reverseShares.slice().reverse(),
     totalStorage: db.files.reduce((sum, file) => sum + file.size, 0),
     headTags: HEAD_TAGS,
     privacyLink: PRIVACY_LINK,
@@ -335,6 +346,113 @@ app.delete("/delete/:hash", isAuthenticated, (req, res) => {
   return res.json({ success: true });
 });
 
+app.post("/reverse-share", isAuthenticated, (req, res) => {
+  loadDB();
+  const hash = generateReverseShareHash();
+  db.reverseShares.push({ hash, createdAt: new Date().toISOString(), used: false });
+  saveDB();
+  return res.json({ success: true, url: `${PROTOCOL}://${DOMAIN}/${hash}` });
+});
+
+app.get("/:hash", (req, res) => {
+  loadDB();
+  const { hash } = req.params;
+  const reverseShare = db.reverseShares.find((e) => e.hash === hash);
+
+  if (!reverseShare) {
+    return res.status(404).render("404", {
+      domain: DOMAIN,
+      loggedIn: !!req.session.loggedIn,
+      headTags: HEAD_TAGS,
+      privacyLink: PRIVACY_LINK,
+      termsLink: TERMS_LINK,
+      imprintLink: IMPRINT_LINK,
+      errorCode: 404,
+    });
+  }
+
+  if (reverseShare.used) {
+    return res.status(410).render("404", {
+      domain: DOMAIN,
+      loggedIn: !!req.session.loggedIn,
+      headTags: HEAD_TAGS,
+      privacyLink: PRIVACY_LINK,
+      termsLink: TERMS_LINK,
+      imprintLink: IMPRINT_LINK,
+      errorCode: 410,
+    });
+  }
+
+  return res.render("reverse-share", {
+    domain: DOMAIN,
+    hash,
+    headTags: HEAD_TAGS,
+    privacyLink: PRIVACY_LINK,
+    termsLink: TERMS_LINK,
+    imprintLink: IMPRINT_LINK,
+  });
+});
+
+app.post("/:hash", createUploadHandler(), (req, res) => {
+  loadDB();
+  const { hash } = req.params;
+  const reverseShareIndex = db.reverseShares.findIndex((e) => e.hash === hash && !e.used);
+
+  if (reverseShareIndex === -1) {
+    return res.status(410).send("Gone or invalid");
+  }
+
+  if (!req.file) {
+    return res.status(400).send("No file provided");
+  }
+
+  const savedFilename = req.file.filename;
+  const [fileHash, ...rest] = savedFilename.split("-");
+  const originalName = rest.join("-");
+  const fileSize = req.file.size;
+
+  db.files.push({
+    hash: fileHash,
+    originalName,
+    savedFilename,
+    size: fileSize,
+    uploadedAt: new Date().toISOString(),
+  });
+
+  db.reverseShares.splice(reverseShareIndex, 1);
+  saveDB();
+
+  const fileURL = `${PROTOCOL}://${DOMAIN}/${fileHash}/${encodeURIComponent(originalName)}`;
+
+  return res.render("reverse-share", {
+    domain: DOMAIN,
+    hash: null,
+    fileURL,
+    headTags: HEAD_TAGS,
+    privacyLink: PRIVACY_LINK,
+    termsLink: TERMS_LINK,
+    imprintLink: IMPRINT_LINK,
+  });
+});
+
+app.delete('/delete/r/:hash', isAuthenticated, (req, res) => {
+  loadDB();
+  const { hash } = req.params;
+  const reverseShareIndex = db.reverseShares.findIndex((share) => share.hash === hash);
+
+  if (reverseShareIndex === -1) {
+    return res.status(404).json({ success: false, message: 'Reverse share not found' });
+  }
+
+  const reverseShare = db.reverseShares[reverseShareIndex];
+
+  db.reverseShares.splice(reverseShareIndex, 1);
+  saveDB();
+
+  console.log(`Reverse share deleted: ${reverseShare.hash}`);
+  return res.json({ success: true });
+});
+
 if (API_ENABLED) {
   if (securityEnabled) {
     app.use("/api", apiLimiter);
@@ -385,6 +503,32 @@ if (API_ENABLED) {
 
     return res.json({ success: true });
   });
+
+  app.post("/api/reverse-share", isApiAuthenticated, (req, res) => {
+    loadDB();
+    const hash = generateReverseShareHash();
+    db.reverseShares.push({ hash, createdAt: new Date().toISOString(), used: false });
+    saveDB();
+    return res.json({ success: true, url: `${PROTOCOL}://${DOMAIN}/${hash}` });
+  });
+
+  app.delete('/api/delete/r/:hash', isApiAuthenticated, (req, res) => {
+    loadDB();
+    const { hash } = req.params;
+    const reverseShareIndex = db.reverseShares.findIndex((share) => share.hash === hash);
+
+    if (reverseShareIndex === -1) {
+      return res.status(404).json({ success: false, message: 'Reverse share not found' });
+    }
+
+    const reverseShare = db.reverseShares[reverseShareIndex];
+
+    db.reverseShares.splice(reverseShareIndex, 1);
+    saveDB();
+
+    console.log(`API: Reverse share deleted: ${reverseShare.hash}`);
+    return res.json({ success: true });
+  });
 } else {
   console.log("API is disabled due to missing or invalid API_KEYS.");
 }
@@ -404,7 +548,7 @@ app.get("/:hash/:filename", (req, res) => {
   return res.sendFile(filePath);
 });
 
-app.use((req, res, next) => {
+app.use((req, res) => {
   res.status(404).render("404", {
     domain: DOMAIN,
     loggedIn: !!req.session.loggedIn,

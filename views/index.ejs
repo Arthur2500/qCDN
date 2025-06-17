@@ -19,7 +19,7 @@ function formatBytes(bytes, decimals = 2) {
   <link rel="icon" href="/icon/favicon.ico">
   <link rel="stylesheet" href="/css/styles.css"/>
   <meta name="robots" content="all">
-  <%- headTags || "" %>
+  <%= headTags || "" %>
 </head>
 <body>
   <header>
@@ -55,6 +55,7 @@ function formatBytes(bytes, decimals = 2) {
           <div id="progressBarFill" class="progress-bar-fill"></div>
         </div>
         <button id="cancelUploadBtn" class="cancel-upload-btn" style="display: none;">Cancel</button>
+        <button id="generateReverseShareBtn" class="cancel-upload-btn" style="background:#333;margin-left:1rem;">Generate reverse share</button>
       </div>
 
       <div class="file-list">
@@ -91,6 +92,37 @@ function formatBytes(bytes, decimals = 2) {
           </tbody>
         </table>
       </div>
+
+      <div class="file-list">
+        <h3>Reverse Shares</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Hash</th>
+              <th>Created At</th>
+              <th>Link</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+          <% reverseShares.forEach(function(share) { %>
+            <tr>
+              <td><%= share.hash %></td>
+              <td><%= share.createdAt ? new Date(share.createdAt).toLocaleString() : '' %></td>
+              <td>
+                <a href="<%= protocol %>://<%= domain %>/<%= share.hash %>" target="_blank">
+                  <%= protocol %>://<%= domain %>/<%= share.hash %>
+                </a>
+              </td>
+              <td>
+                <button class="copy-reverse-btn" data-url="<%= protocol %>://<%= domain %>/<%= share.hash %>">Copy</button>
+                <button class="delete-reverse-btn" data-hash="<%= share.hash %>">Delete</button>
+              </td>
+            </tr>
+          <% }); %>
+          </tbody>
+        </table>
+      </div>
     <% } %>
   </main>
 
@@ -100,6 +132,15 @@ function formatBytes(bytes, decimals = 2) {
       <p id="uploadedFileLink"></p>
       <button id="copyLinkButton">Copy</button>
       <button id="closeResultButton">Close</button>
+    </div>
+  </div>
+
+  <div id="reverseLinkResult" class="upload-result" style="display:none;">
+    <div class="upload-result-content">
+      <p>Reverse share link generated:</p>
+      <p id="reverseShareURL"></p>
+      <button id="copyReverseLinkBtn">Copy</button>
+      <button id="closeReverseResultBtn">Close</button>
     </div>
   </div>
 

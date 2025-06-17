@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reverse Upload - qCDN - <%= domain %></title>
+  <meta name="description" content="One-time file upload via reverse share link."/>
+  <link rel="icon" href="/icon/favicon.ico">
+  <link rel="stylesheet" href="/css/styles.css"/>
+  <meta name="robots" content="noindex">
+  <%= headTags || "" %>
+</head>
+<body>
+  <header>
+    <div class="header-left"><%= domain %></div>
+  </header>
+
+  <main>
+    <div id="message" class="message" style="display:none;"></div>
+
+    <% if (typeof fileURL !== 'undefined' && fileURL) { %>
+      <div class="upload-result" style="display:block;background:none;position:relative;height:auto;">
+        <div class="upload-result-content">
+          <p>Upload successful! Download link:</p>
+          <p><a id="uploadedFileLink" href="<%= fileURL %>" target="_blank"><%= fileURL %></a></p>
+          <button id="copyLinkButton">Copy</button>
+        </div>
+      </div>
+    <% } else { %>
+      <div class="upload-container">
+        <div id="dropArea" class="drop-area">
+          <p>Drag files here or click to upload</p>
+          <input type="file" id="fileInput" style="display:none;">
+        </div>
+        <div id="progressBar" class="progress-bar" style="display: none;">
+          <div id="progressBarFill" class="progress-bar-fill"></div>
+        </div>
+        <button id="cancelUploadBtn" class="cancel-upload-btn" style="display: none;">Cancel</button>
+      </div>
+    <% } %>
+  </main>
+
+  <footer>
+    <div class="footer">
+      <% if (privacyLink) { %>
+        <a href="<%= privacyLink %>" target="_blank" rel="nofollow">Privacy</a>
+      <% } %>
+      <% if (termsLink) { %>
+        <a href="<%= termsLink %>" target="_blank" rel="nofollow">Terms</a>
+      <% } %>
+      <% if (imprintLink) { %>
+        <a href="<%= imprintLink %>" target="_blank" rel="nofollow">Imprint</a>
+      <% } %>
+      <a href="https://github.com/Arthur2500/qCDN" target="_blank" rel="nofollow">Source Code</a>
+    </div>
+  </footer>
+
+  <script src="/js/reverse-share.js"></script>
+</body>
+</html>
