@@ -55,6 +55,7 @@ function formatBytes(bytes, decimals = 2) {
           <div id="progressBarFill" class="progress-bar-fill"></div>
         </div>
         <button id="cancelUploadBtn" class="cancel-upload-btn" style="display: none;">Cancel</button>
+        <button id="generateReverseShareBtn" class="cancel-upload-btn" style="background:#333;margin-left:1rem;">Generate reverse share</button>
       </div>
 
       <div class="file-list">
@@ -100,6 +101,15 @@ function formatBytes(bytes, decimals = 2) {
       <p id="uploadedFileLink"></p>
       <button id="copyLinkButton">Copy</button>
       <button id="closeResultButton">Close</button>
+    </div>
+  </div>
+
+  <div id="reverseLinkResult" class="upload-result" style="display:none;">
+    <div class="upload-result-content">
+      <p>Reverse share link generated:</p>
+      <p id="reverseShareURL"></p>
+      <button id="copyReverseLinkBtn">Copy</button>
+      <button id="closeReverseResultBtn">Close</button>
     </div>
   </div>
 

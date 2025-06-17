@@ -10,6 +10,11 @@ document.addEventListener("DOMContentLoaded", function() {
   const copyLinkButton = document.getElementById("copyLinkButton");
   const closeResultButton = document.getElementById("closeResultButton");
   const messageDiv = document.getElementById("message");
+  const generateReverseShareBtn = document.getElementById("generateReverseShareBtn");
+  const reverseLinkResult = document.getElementById("reverseLinkResult");
+  const reverseShareURL = document.getElementById("reverseShareURL");
+  const copyReverseLinkBtn = document.getElementById("copyReverseLinkBtn");
+  const closeReverseResultBtn = document.getElementById("closeReverseResultBtn");
 
   let currentUploadRequest = null;
 
@@ -185,4 +190,33 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });
   });
+
+  if (generateReverseShareBtn) {
+    generateReverseShareBtn.addEventListener("click", () => {
+      fetch("/reverse-share", { method: "POST" })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.url) {
+            reverseShareURL.textContent = data.url;
+            reverseLinkResult.style.display = "block";
+            copyReverseLinkBtn.onclick = () => {
+              navigator.clipboard.writeText(data.url).then(() => {
+                showMessage("success", "Link copied!");
+              }).catch(() => {
+                showMessage("error", "Clipboard access denied.");
+              });
+            };
+            closeReverseResultBtn.onclick = () => {
+              reverseLinkResult.style.display = "none";
+            };
+          } else {
+            showMessage("error", "Failed to generate reverse share link.");
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          showMessage("error", "Error generating reverse share link.");
+        });
+    });
+  }
 });

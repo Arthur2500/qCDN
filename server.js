@@ -182,6 +182,16 @@ function saveDB() {
 
 loadDB();
 
+// Erweiterung der DB-Struktur beim Initialisieren:
+if (!db.reverseShares) {
+  db.reverseShares = [];
+  saveDB();
+}
+
+function generateReverseShareHash() {
+  return crypto.randomBytes(16).toString("hex");
+}
+
 function isAuthenticated(req, res, next) {
   if (req.session && req.session.loggedIn) {
     return next();
@@ -335,6 +345,97 @@ app.delete("/delete/:hash", isAuthenticated, (req, res) => {
   return res.json({ success: true });
 });
 
+// Route: POST /reverse-share (UI)
+app.post("/reverse-share", isAuthenticated, (req, res) => {
+  loadDB();
+  const hash = generateReverseShareHash();
+  db.reverseShares.push({ hash, createdAt: new Date().toISOString(), used: false });
+  saveDB();
+  return res.json({ success: true, url: `${PROTOCOL}://${DOMAIN}/${hash}` });
+});
+
+// Route: GET /:hash (Reverse Upload View)
+app.get("/:hash", (req, res, next) => {
+  loadDB();
+  const { hash } = req.params;
+  const reverseShare = db.reverseShares.find((e) => e.hash === hash);
+
+  if (!reverseShare) {
+    return res.status(404).render("404", {
+      domain: DOMAIN,
+      loggedIn: !!req.session.loggedIn,
+      headTags: HEAD_TAGS,
+      privacyLink: PRIVACY_LINK,
+      termsLink: TERMS_LINK,
+      imprintLink: IMPRINT_LINK,
+      errorCode: 404,
+    });
+  }
+
+  if (reverseShare.used) {
+    return res.status(410).render("404", {
+      domain: DOMAIN,
+      loggedIn: !!req.session.loggedIn,
+      headTags: HEAD_TAGS,
+      privacyLink: PRIVACY_LINK,
+      termsLink: TERMS_LINK,
+      imprintLink: IMPRINT_LINK,
+      errorCode: 410,
+    });
+  }
+
+  return res.render("reverse-upload", {
+    domain: DOMAIN,
+    hash,
+    headTags: HEAD_TAGS,
+    privacyLink: PRIVACY_LINK,
+    termsLink: TERMS_LINK,
+    imprintLink: IMPRINT_LINK,
+  });
+});
+
+// Route: POST /:hash (Public Upload)
+app.post("/:hash", createUploadHandler(), (req, res) => {
+  loadDB();
+  const { hash } = req.params;
+  const reverseShare = db.reverseShares.find((e) => e.hash === hash && !e.used);
+
+  if (!reverseShare) {
+    return res.status(410).send("Gone or invalid");
+  }
+
+  if (!req.file) {
+    return res.status(400).send("No file provided");
+  }
+
+  const savedFilename = req.file.filename;
+  const [fileHash, ...rest] = savedFilename.split("-");
+  const originalName = rest.join("-");
+  const fileSize = req.file.size;
+
+  db.files.push({
+    hash: fileHash,
+    originalName,
+    savedFilename,
+    size: fileSize,
+    uploadedAt: new Date().toISOString(),
+  });
+  reverseShare.used = true;
+  saveDB();
+
+  const fileURL = `${PROTOCOL}://${DOMAIN}/${fileHash}/${encodeURIComponent(originalName)}`;
+
+  return res.render("reverse-upload", {
+    domain: DOMAIN,
+    hash: null,
+    fileURL,
+    headTags: HEAD_TAGS,
+    privacyLink: PRIVACY_LINK,
+    termsLink: TERMS_LINK,
+    imprintLink: IMPRINT_LINK,
+  });
+});
+
 if (API_ENABLED) {
   if (securityEnabled) {
     app.use("/api", apiLimiter);
@@ -384,6 +485,48 @@ if (API_ENABLED) {
     saveDB();
 
     return res.json({ success: true });
+  });
+
+  // API: POST /api/reverse-share
+  app.post("/api/reverse-share", isApiAuthenticated, (req, res) => {
+    loadDB();
+    const hash = generateReverseShareHash();
+    db.reverseShares.push({ hash, createdAt: new Date().toISOString(), used: false });
+    saveDB();
+    return res.json({ success: true, url: `${PROTOCOL}://${DOMAIN}/${hash}` });
+  });
+
+  // API: POST /api/:hash (upload via reverse link)
+  app.post("/api/:hash", isApiAuthenticated, createUploadHandler(), (req, res) => {
+    loadDB();
+    const { hash } = req.params;
+    const reverseShare = db.reverseShares.find((e) => e.hash === hash && !e.used);
+
+    if (!reverseShare) {
+      return res.status(410).json({ success: false, message: "Link invalid or used" });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "No file provided" });
+    }
+
+    const savedFilename = req.file.filename;
+    const [fileHash, ...rest] = savedFilename.split("-");
+    const originalName = rest.join("-");
+    const fileSize = req.file.size;
+
+    db.files.push({
+      hash: fileHash,
+      originalName,
+      savedFilename,
+      size: fileSize,
+      uploadedAt: new Date().toISOString(),
+    });
+    reverseShare.used = true;
+    saveDB();
+
+    const fileURL = `${PROTOCOL}://${DOMAIN}/${fileHash}/${encodeURIComponent(originalName)}`;
+    return res.json({ success: true, url: fileURL });
   });
 } else {
   console.log("API is disabled due to missing or invalid API_KEYS.");

@@ -16,10 +16,17 @@
   </header>
 
   <main>
-    <div class="login-container">
-      <h1>404 - Page Not Found</h1>
-      <p>Oops! The page you're looking for doesn't exist.</p>
-    </div>
+    <% if (errorCode === 404) { %>
+      <div class="login-container">
+        <h1>404 - Page Not Found</h1>
+        <p>Oops! The page you're looking for doesn't exist.</p>
+      </div>
+    <% } else if (errorCode === 410) { %>
+      <div class="login-container">
+        <h1>410 - Gone</h1>
+        <p>The resource you are looking for is no longer available.</p>
+      </div>
+    <% } %>
   </main>
 
   <footer>
