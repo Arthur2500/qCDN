@@ -191,6 +191,171 @@ else:
     print("Error:", response.text)
 ```
 
+### `/api/list`
+#### Method: `GET`
+#### Description:
+Returns a list of all uploaded files.
+
+#### Request Headers
+- `x-api-token`: API authentication token.
+
+#### Response
+- **Success**:
+```json
+{
+  "success": true,
+  "uploads": [
+    {
+      "hash": "<hash>",
+      "originalName": "<originalName>",
+      "size": <size>,
+      "uploadedAt": "<uploadedAt>"
+    }
+  ]
+}
+```
+- **Failure**:
+```json
+{
+  "success": false,
+  "message": "Error message"
+}
+```
+
+#### Example Requests
+##### `curl`
+```sh
+curl -X GET http://localhost:3000/api/list \
+  -H "x-api-token: YOUR_API_TOKEN"
+```
+
+##### Python
+```python
+import requests
+
+url = "http://localhost:3000/api/list"
+headers = {"x-api-token": "YOUR_API_TOKEN"}
+
+response = requests.get(url, headers=headers)
+if response.status_code == 200:
+    data = response.json()
+    if data.get("success"):
+        print("Uploads:", data["uploads"])
+    else:
+        print("Error:", data)
+else:
+    print("Error:", response.text)
+```
+
+### `/api/list/r`
+#### Method: `GET`
+#### Description:
+Returns a list of all reverse shares.
+
+#### Request Headers
+- `x-api-token`: API authentication token.
+
+#### Response
+- **Success**:
+```json
+{
+  "success": true,
+  "reverseShares": [
+    {
+      "hash": "<hash>",
+      "createdAt": "<createdAt>",
+      "used": <true/false>
+    }
+  ]
+}
+```
+- **Failure**:
+```json
+{
+  "success": false,
+  "message": "Error message"
+}
+```
+
+#### Example Requests
+##### `curl`
+```sh
+curl -X GET http://localhost:3000/api/list/r \
+  -H "x-api-token: YOUR_API_TOKEN"
+```
+
+##### Python
+```python
+import requests
+
+url = "http://localhost:3000/api/list/r"
+headers = {"x-api-token": "YOUR_API_TOKEN"}
+
+response = requests.get(url, headers=headers)
+if response.status_code == 200:
+    data = response.json()
+    if data.get("success"):
+        print("Reverse Shares:", data["reverseShares"])
+    else:
+        print("Error:", data)
+else:
+    print("Error:", response.text)
+```
+
+### `/api/reverse-share/:hash/status`
+#### Method: `GET`
+#### Description:
+Fetches the status of a reverse share.
+
+#### Request Headers
+- `x-api-token`: API authentication token.
+
+#### Response
+- **Success**:
+```json
+{
+  "success": true,
+  "used": false,
+  "filename": "example.txt",
+  "fileUrl": "https://your-domain/example-hash/example.txt",
+  "uploadedAt": "2025-06-17T11:00:00.000Z",
+  "createdAt": "2025-06-17T10:00:00.000Z",
+  "callbackUrl": "https://example.com/webhook"
+}
+```
+- **Failure**:
+```json
+{
+  "success": false,
+  "message": "Error message"
+}
+```
+
+#### Example Requests
+##### `curl`
+```sh
+curl -X GET https://your-domain/api/reverse-share/example-hash/status \
+  -H "x-api-token: YOUR_API_TOKEN"
+```
+
+##### Python
+```python
+import requests
+
+url = "https://your-domain/api/reverse-share/example-hash/status"
+headers = {"x-api-token": "YOUR_API_TOKEN"}
+
+response = requests.get(url, headers=headers)
+if response.status_code == 200:
+    data = response.json()
+    if data.get("success"):
+        print("Reverse Share Status:", data)
+    else:
+        print("Error:", data)
+else:
+    print("Error:", response.text)
+```
+
 ### Reverse Shares
 Reverse shares allow one-time file uploads via a special link. This feature is particularly useful for receiving files from other users without granting them full access to the platform.
 

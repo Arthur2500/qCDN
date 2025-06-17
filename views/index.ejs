@@ -19,7 +19,7 @@ function formatBytes(bytes, decimals = 2) {
   <link rel="icon" href="/icon/favicon.ico">
   <link rel="stylesheet" href="/css/styles.css"/>
   <meta name="robots" content="all">
-  <%= headTags || "" %>
+  <%- headTags || "" %>
 </head>
 <body>
   <header>
@@ -55,7 +55,7 @@ function formatBytes(bytes, decimals = 2) {
           <div id="progressBarFill" class="progress-bar-fill"></div>
         </div>
         <button id="cancelUploadBtn" class="cancel-upload-btn" style="display: none;">Cancel</button>
-        <button id="generateReverseShareBtn" class="cancel-upload-btn" style="background:#333;margin-left:1rem;">Generate reverse share</button>
+        <button id="generateReverseShareBtn" class="cancel-upload-btn">Generate reverse share</button>
       </div>
 
       <div class="file-list">
@@ -100,6 +100,7 @@ function formatBytes(bytes, decimals = 2) {
             <tr>
               <th>Hash</th>
               <th>Created At</th>
+              <th>Used</th>
               <th>Link</th>
               <th>Action</th>
             </tr>
@@ -109,6 +110,7 @@ function formatBytes(bytes, decimals = 2) {
             <tr>
               <td><%= share.hash %></td>
               <td><%= share.createdAt ? new Date(share.createdAt).toLocaleString() : '' %></td>
+              <td><%= share.used ? 'Yes' : 'No' %></td>
               <td>
                 <a href="<%= protocol %>://<%= domain %>/<%= share.hash %>" target="_blank">
                   <%= protocol %>://<%= domain %>/<%= share.hash %>

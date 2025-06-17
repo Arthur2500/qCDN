@@ -161,6 +161,10 @@ main {
   text-decoration: none;
 }
 
+#generateReverseShareBtn {
+  background-color: #333;
+}
+
 .copy-btn,
 .delete-btn,
 .copy-reverse-btn,
