@@ -182,7 +182,7 @@ function saveDB() {
 
 loadDB();
 
-// Erweiterung der DB-Struktur beim Initialisieren:
+// Migrate DB
 if (!db.reverseShares) {
   db.reverseShares = [];
   saveDB();
@@ -346,7 +346,6 @@ app.delete("/delete/:hash", isAuthenticated, (req, res) => {
   return res.json({ success: true });
 });
 
-// Route: POST /reverse-share (UI)
 app.post("/reverse-share", isAuthenticated, (req, res) => {
   loadDB();
   const hash = generateReverseShareHash();
@@ -355,8 +354,7 @@ app.post("/reverse-share", isAuthenticated, (req, res) => {
   return res.json({ success: true, url: `${PROTOCOL}://${DOMAIN}/${hash}` });
 });
 
-// Route: GET /:hash (Reverse Upload View)
-app.get("/:hash", (req, res, next) => {
+app.get("/:hash", (req, res) => {
   loadDB();
   const { hash } = req.params;
   const reverseShare = db.reverseShares.find((e) => e.hash === hash);
@@ -421,7 +419,6 @@ app.post("/:hash", createUploadHandler(), (req, res) => {
     uploadedAt: new Date().toISOString(),
   });
 
-  // Entferne das benutzte Reverse Share direkt aus der JSON
   db.reverseShares.splice(reverseShareIndex, 1);
   saveDB();
 
@@ -449,7 +446,6 @@ app.delete('/delete/r/:hash', isAuthenticated, (req, res) => {
 
   const reverseShare = db.reverseShares[reverseShareIndex];
 
-  // Entferne das Reverse Share aus der JSON
   db.reverseShares.splice(reverseShareIndex, 1);
   saveDB();
 
@@ -527,7 +523,6 @@ if (API_ENABLED) {
 
     const reverseShare = db.reverseShares[reverseShareIndex];
 
-    // Entferne das Reverse Share aus der JSON
     db.reverseShares.splice(reverseShareIndex, 1);
     saveDB();
 
@@ -553,7 +548,7 @@ app.get("/:hash/:filename", (req, res) => {
   return res.sendFile(filePath);
 });
 
-app.use((req, res, next) => {
+app.use((req, res) => {
   res.status(404).render("404", {
     domain: DOMAIN,
     loggedIn: !!req.session.loggedIn,
