@@ -191,3 +191,61 @@ else:
     print("Error:", response.text)
 ```
 
+### Reverse Shares
+Reverse shares allow one-time file uploads via a special link. This feature is particularly useful for receiving files from other users without granting them full access to the platform.
+
+#### Create a Reverse Share
+##### `curl`
+```sh
+curl -X POST https://<DOMAIN>/api/reverse-share \
+  -H "x-api-token: YOUR_API_TOKEN"
+```
+
+##### Python
+```python
+import requests
+
+url = "https://<DOMAIN>/api/reverse-share"
+headers = {"x-api-token": "YOUR_API_TOKEN"}
+
+response = requests.post(url, headers=headers)
+if response.status_code == 200:
+    data = response.json()
+    if data.get("success"):
+        print("Reverse share created successfully:", data["url"])
+    else:
+        print("Error:", data)
+else:
+    print("Error:", response.text)
+```
+
+#### Use a Reverse Share
+1. Open the generated reverse share link.
+2. Drag and drop the file into the upload area or select it manually.
+3. The file will be uploaded, and a download link will be displayed.
+
+#### Delete a Reverse Share
+##### `curl`
+```sh
+curl -X DELETE https://<DOMAIN>/api/delete/r/<HASH> \
+  -H "x-api-token: YOUR_API_TOKEN"
+```
+
+##### Python
+```python
+import requests
+
+url = "https://<DOMAIN>/api/delete/r/<HASH>"
+headers = {"x-api-token": "YOUR_API_TOKEN"}
+
+response = requests.delete(url, headers=headers)
+if response.status_code == 200:
+    data = response.json()
+    if data.get("success"):
+        print("Reverse share deleted successfully")
+    else:
+        print("Error:", data)
+else:
+    print("Error:", response.text)
+```
+
