@@ -143,7 +143,7 @@ else:
     print("Error:", response.text)
 ```
 
-### `/api/:hash`
+### `/api/upload/:hash`
 #### Method: `POST`
 #### Description:
 Uploads a file to a reverse share by its hash. No authentication required.
@@ -172,7 +172,7 @@ Uploads a file to a reverse share by its hash. No authentication required.
 #### Example Requests
 ##### `curl`
 ```sh
-curl -X POST http://localhost:3000/api/<hash> \
+curl -X POST http://localhost:3000/api/upload/<hash> \
   -F "file=@/path/to/your/file.txt"
 ```
 
@@ -180,7 +180,7 @@ curl -X POST http://localhost:3000/api/<hash> \
 ```python
 import requests
 
-url = "http://localhost:3000/api/<hash>"
+url = "http://localhost:3000/api/upload/<hash>"
 files = {"file": open("/path/to/your/file.txt", "rb")}
 
 response = requests.post(url, files=files)
@@ -411,7 +411,7 @@ Lists all reverse shares.
 ```json
 {
   "success": true,
-  "uploads": [<reverse_share_objects>]
+  "reverseShares": [<reverse_share_objects>]
 }
 ```
 - **Failure**:
@@ -440,7 +440,7 @@ response = requests.get(url, headers=headers)
 if response.status_code == 200:
     data = response.json()
     if data.get("success"):
-        print("Reverse Shares:", data["uploads"])
+        print("Reverse Shares:", data["reverseShares"])
     else:
         print("Error:", data)
 else:

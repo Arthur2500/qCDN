@@ -485,6 +485,41 @@ if (API_ENABLED) {
     return res.json({ success: true, url: fileURL });
   });
 
+  app.post("/api/upload/:hash", createUploadHandler(), (req, res) => {
+    loadDB();
+    const { hash } = req.params;
+    const reverseShare = db.reverseShares.find((e) => e.hash === hash && !e.used);
+    if (!reverseShare) {
+      return res.status(410).json({ success: false, message: "Gone or invalid" });
+    }
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "No file provided" });
+    }
+    const savedFilename = req.file.filename;
+    const [fileHash, ...rest] = savedFilename.split("-");
+    const originalName = rest.join("-");
+    const fileSize = req.file.size;
+    const fileEntry = {
+      hash: fileHash,
+      originalName,
+      savedFilename,
+      size: fileSize,
+      uploadedAt: new Date().toISOString(),
+    };
+    db.files.push(fileEntry);
+    reverseShare.used = true;
+    reverseShare.uploadedAt = fileEntry.uploadedAt;
+    reverseShare.filename = originalName;
+    reverseShare.fileUrl = `${PROTOCOL}://${DOMAIN}/${fileHash}/${encodeURIComponent(originalName)}`;
+    saveDB();
+    return res.json({
+      success: true,
+      fileUrl: reverseShare.fileUrl,
+      filename: reverseShare.filename,
+      uploadedAt: reverseShare.uploadedAt,
+    });
+  });
+
   app.delete("/api/:hash", isApiAuthenticated, (req, res) => {
     loadDB();
     const { hash } = req.params;
@@ -539,41 +574,6 @@ if (API_ENABLED) {
       uploadedAt: reverseShare.uploadedAt,
       createdAt: reverseShare.createdAt,
       callbackUrl: reverseShare.callbackUrl
-    });
-  });
-
-  app.post("/api/:hash", createUploadHandler(), (req, res) => {
-    loadDB();
-    const { hash } = req.params;
-    const reverseShare = db.reverseShares.find((e) => e.hash === hash && !e.used);
-    if (!reverseShare) {
-      return res.status(410).json({ success: false, message: "Gone or invalid" });
-    }
-    if (!req.file) {
-      return res.status(400).json({ success: false, message: "No file provided" });
-    }
-    const savedFilename = req.file.filename;
-    const [fileHash, ...rest] = savedFilename.split("-");
-    const originalName = rest.join("-");
-    const fileSize = req.file.size;
-    const fileEntry = {
-      hash: fileHash,
-      originalName,
-      savedFilename,
-      size: fileSize,
-      uploadedAt: new Date().toISOString(),
-    };
-    db.files.push(fileEntry);
-    reverseShare.used = true;
-    reverseShare.uploadedAt = fileEntry.uploadedAt;
-    reverseShare.filename = originalName;
-    reverseShare.fileUrl = `${PROTOCOL}://${DOMAIN}/${fileHash}/${encodeURIComponent(originalName)}`;
-    saveDB();
-    return res.json({
-      success: true,
-      fileUrl: reverseShare.fileUrl,
-      filename: reverseShare.filename,
-      uploadedAt: reverseShare.uploadedAt,
     });
   });
 
