@@ -75,30 +75,31 @@
       <% }) %>
     </section>
 
-    <!-- /api/delete/:hash -->
+    <!-- /api/:hash -->
     <section>
-      <h3>/api/delete/:hash</h3>
-      <p><strong>Method:</strong> DELETE</p>
-      <p><strong>Headers:</strong> <code>x-api-token</code></p>
+      <h3>/api/:hash</h3>
+
+      <p><strong>Method:</strong> POST</p>
+      <p><strong>Body:</strong> <code>file</code> (multipart/form-data)</p>
 
       <h4>Example curl</h4>
       <% apiKeys.forEach(function(key) { %>
-  <pre><code>curl -X DELETE <%= protocol %>://<%= domain %>/api/delete/&lt;hash&gt; \
-    -H "x-api-token: <%= key %>"</code></pre>
+  <pre><code>curl -X POST <%= protocol %>://<%= domain %>/api/&lt;hash&gt; \
+    -F "file=@/path/to/your/file.txt"</code></pre>
       <% }) %>
 
       <h4>Example Python</h4>
       <% apiKeys.forEach(function(key) { %>
   <pre><code>import requests
 
-  url = "<%= protocol %>://<%= domain %>/api/delete/&lt;hash&gt;"
-  headers = {"x-api-token": "<%= key %>"}
+  url = "<%= protocol %>://<%= domain %>/api/&lt;hash&gt;"
+  files = {"file": open("/path/to/your/file.txt", "rb")}
 
-  response = requests.delete(url, headers=headers)
+  response = requests.post(url, files=files)
   if response.status_code == 200:
       data = response.json()
       if data.get("success"):
-          print("File deleted")
+          print("File uploaded successfully:", data["fileUrl"])
       else:
           print("Error:", data)
   else:
@@ -107,16 +108,19 @@
 
       <h4>Example JavaScript (Node.js)</h4>
       <% apiKeys.forEach(function(key) { %>
-  <pre><code>const axios = require('axios');
+  <pre><code>const fs = require('fs');
+  const axios = require('axios');
+  const FormData = require('form-data');
 
-  const hash = "PUT_FILE_HASH_HERE";
+  const form = new FormData();
+  form.append('file', fs.createReadStream('path/to/your/file.txt'));
 
-  axios.delete('<%= protocol %>://<%= domain %>/api/delete/${hash}', {
+  axios.post('<%= protocol %>://<%= domain %>/api/&lt;hash&gt;', form, {
     headers: {
-      'x-api-token': '<%= key %>'
+      ...form.getHeaders()
     }
   })
-  .then(res => console.log("File deleted"))
+  .then(res => console.log("Uploaded:", res.data.fileUrl))
   .catch(err => console.error("Error:", err.response?.data || err.message));</code></pre>
       <% }) %>
     </section>
@@ -157,52 +161,6 @@ axios.post('<%= protocol %>://<%= domain %>/api/reverse-share', {}, {
   <% }) %>
 </section>
 
-    <!-- /api/delete/r/:hash -->
-<section>
-  <h3>/api/delete/r/:hash</h3>
-  <p><strong>Method:</strong> DELETE</p>
-  <p><strong>Headers:</strong> <code>x-api-token</code></p>
-
-  <h4>Example curl</h4>
-  <% apiKeys.forEach(function(key) { %>
-<pre><code>curl -X DELETE <%= protocol %>://<%= domain %>/api/delete/r/&lt;hash&gt; \
-  -H "x-api-token: <%= key %>"</code></pre>
-  <% }) %>
-
-  <h4>Example Python</h4>
-  <% apiKeys.forEach(function(key) { %>
-<pre><code>import requests
-
-url = "<%= protocol %>://<%= domain %>/api/delete/r/&lt;hash&gt;"
-headers = {"x-api-token": "<%= key %>"}
-
-response = requests.delete(url, headers=headers)
-if response.status_code == 200:
-    data = response.json()
-    if data.get("success"):
-        print("Reverse share deleted")
-    else:
-        print("Error:", data)
-else:
-    print("Error:", response.text)</code></pre>
-  <% }) %>
-
-  <h4>Example JavaScript (Node.js)</h4>
-  <% apiKeys.forEach(function(key) { %>
-<pre><code>const axios = require('axios');
-
-const hash = "PUT_REVERSE_SHARE_HASH_HERE";
-
-axios.delete('<%= protocol %>://<%= domain %>/api/delete/r/${hash}', {
-  headers: {
-    'x-api-token': '<%= key %>'
-  }
-})
-.then(res => console.log("Reverse share deleted"))
-.catch(err => console.error("Error:", err.response?.data || err.message));</code></pre>
-  <% }) %>
-</section>
-
     <!-- /api/list -->
 <section>
   <h3>/api/list</h3>
@@ -239,16 +197,16 @@ axios.get('<%= protocol %>://<%= domain %>/api/list', {
   <% }) %>
 </section>
 
-<!-- /api/list/r -->
+<!-- /api/list/reverse-shares -->
 <section>
-  <h3>/api/list/r</h3>
+  <h3>/api/list/reverse-shares</h3>
   <p><strong>Method:</strong> GET</p>
   <p><strong>Headers:</strong> <code>x-api-token</code></p>
   <p><strong>Response:</strong> <code>{ success: true, reverseShares: [...] }</code></p>
 
   <h4>Example curl</h4>
   <% apiKeys.forEach(function(key) { %>
-<pre><code>curl -X GET <%= protocol %>://<%= domain %>/api/list/r \
+<pre><code>curl -X GET <%= protocol %>://<%= domain %>/api/list/reverse-shares \
   -H "x-api-token: <%= key %>"</code></pre>
   <% }) %>
 
@@ -256,7 +214,7 @@ axios.get('<%= protocol %>://<%= domain %>/api/list', {
   <% apiKeys.forEach(function(key) { %>
 <pre><code>import requests
 
-url = "<%= protocol %>://<%= domain %>/api/list/r"
+url = "<%= protocol %>://<%= domain %>/api/list/reverse-shares"
 headers = {"x-api-token": "<%= key %>"}
 
 response = requests.get(url, headers=headers)
@@ -267,55 +225,10 @@ print(response.json())</code></pre>
   <% apiKeys.forEach(function(key) { %>
 <pre><code>const axios = require('axios');
 
-axios.get('<%= protocol %>://<%= domain %>/api/list/r', {
+axios.get('<%= protocol %>://<%= domain %>/api/list/reverse-shares', {
   headers: { 'x-api-token': '<%= key %>' }
 })
 .then(res => console.log("Reverse Shares:", res.data.reverseShares))
-.catch(err => console.error("Error:", err.response?.data || err.message));</code></pre>
-  <% }) %>
-</section>
-
-<!-- /api/reverse-share/:hash/status -->
-<section>
-  <h3>/api/reverse-share/:hash/status</h3>
-  <p><strong>Method:</strong> GET</p>
-  <p><strong>Headers:</strong> <code>x-api-token</code></p>
-  <p><strong>Response:</strong></p>
-  <pre><code>{
-  "success": true,
-  "used": false,
-  "filename": "example.txt",
-  "fileUrl": "https://your-domain/example-hash/example.txt",
-  "uploadedAt": "2025-06-17T11:00:00.000Z",
-  "createdAt": "2025-06-17T10:00:00.000Z",
-  "callbackUrl": "https://example.com/webhook"
-}</code></pre>
-
-  <h4>Example curl</h4>
-  <% apiKeys.forEach(function(key) { %>
-<pre><code>curl -X GET <%= protocol %>://<%= domain %>/api/reverse-share/&lt;hash&gt;/status \
-  -H "x-api-token: <%= key %>"</code></pre>
-  <% }) %>
-
-  <h4>Example Python</h4>
-  <% apiKeys.forEach(function(key) { %>
-<pre><code>import requests
-
-url = "<%= protocol %>://<%= domain %>/api/reverse-share/&lt;hash&gt;/status"
-headers = {"x-api-token": "<%= key %>"}
-
-response = requests.get(url, headers=headers)
-print(response.json())</code></pre>
-  <% }) %>
-
-  <h4>Example JavaScript (Node.js)</h4>
-  <% apiKeys.forEach(function(key) { %>
-<pre><code>const axios = require('axios');
-
-axios.get('<%= protocol %>://<%= domain %>/api/reverse-share/&lt;hash&gt;/status', {
-  headers: { 'x-api-token': '<%= key %>' }
-})
-.then(res => console.log("Reverse Share Status:", res.data))
 .catch(err => console.error("Error:", err.response?.data || err.message));</code></pre>
   <% }) %>
 </section>

@@ -143,19 +143,22 @@ else:
     print("Error:", response.text)
 ```
 
-### `/api/delete/:hash`
-#### Method: `DELETE`
+### `/api/:hash`
+#### Method: `POST`
 #### Description:
-Allows authenticated users to delete an uploaded file by hash.
+Uploads a file to a reverse share by its hash. No authentication required.
 
-#### Request Headers
-- `x-api-token`: API authentication token.
+#### Request Body
+- `file`: File to upload (multipart/form-data).
 
 #### Response
 - **Success**:
 ```json
 {
-  "success": true
+  "success": true,
+  "fileUrl": "<file_url>",
+  "filename": "<filename>",
+  "uploadedAt": "<timestamp>"
 }
 ```
 - **Failure**:
@@ -169,32 +172,31 @@ Allows authenticated users to delete an uploaded file by hash.
 #### Example Requests
 ##### `curl`
 ```sh
-curl -X DELETE http://localhost:3000/api/delete/<hash> \
-  -H "x-api-token: YOUR_API_TOKEN"
+curl -X POST http://localhost:3000/api/<hash> \
+  -F "file=@/path/to/your/file.txt"
 ```
 
 ##### Python
 ```python
 import requests
 
-url = "http://localhost:3000/api/delete/<hash>"
-headers = {"x-api-token": "YOUR_API_TOKEN"}
+url = "http://localhost:3000/api/<hash>"
+files = {"file": open("/path/to/your/file.txt", "rb")}
 
-response = requests.delete(url, headers=headers)
+response = requests.post(url, files=files)
 if response.status_code == 200:
     data = response.json()
     if data.get("success"):
-        print("File deleted successfully")
+        print("File uploaded successfully:", data["fileUrl"])
     else:
         print("Error:", data)
 else:
     print("Error:", response.text)
 ```
 
-### `/api/list`
 #### Method: `GET`
 #### Description:
-Returns a list of all uploaded files.
+Retrieves information about a reverse share by its hash.
 
 #### Request Headers
 - `x-api-token`: API authentication token.
@@ -204,14 +206,163 @@ Returns a list of all uploaded files.
 ```json
 {
   "success": true,
-  "uploads": [
-    {
-      "hash": "<hash>",
-      "originalName": "<originalName>",
-      "size": <size>,
-      "uploadedAt": "<uploadedAt>"
-    }
-  ]
+  "used": true | false,
+  "filename": "<filename>",
+  "fileUrl": "<file_url>",
+  "uploadedAt": "<timestamp>",
+  "createdAt": "<timestamp>",
+  "callbackUrl": "<callback_url>"
+}
+```
+- **Failure**:
+```json
+{
+  "success": false,
+  "message": "Error message"
+}
+```
+
+#### Example Requests
+##### `curl`
+```sh
+curl -X GET http://localhost:3000/api/<hash> \
+  -H "x-api-token: YOUR_API_TOKEN"
+```
+
+##### Python
+```python
+import requests
+
+url = "http://localhost:3000/api/<hash>"
+headers = {"x-api-token": "YOUR_API_TOKEN"}
+
+response = requests.get(url, headers=headers)
+if response.status_code == 200:
+    data = response.json()
+    if data.get("success"):
+        print("Reverse share details:", data)
+    else:
+        print("Error:", data)
+else:
+    print("Error:", response.text)
+```
+
+#### Method: `DELETE`
+#### Description:
+Allows authenticated users to delete an uploaded file or reverse share by hash.
+
+#### Request Headers
+- `x-api-token`: API authentication token.
+
+#### Response
+- **Success**:
+```json
+{
+  "success": true,
+  "type": "file" | "reverse-share"
+}
+```
+- **Failure**:
+```json
+{
+  "success": false,
+  "message": "Error message"
+}
+```
+
+#### Example Requests
+##### `curl`
+```sh
+curl -X DELETE http://localhost:3000/api/<hash> \
+  -H "x-api-token: YOUR_API_TOKEN"
+```
+
+##### Python
+```python
+import requests
+
+url = "http://localhost:3000/api/<hash>"
+headers = {"x-api-token": "YOUR_API_TOKEN"}
+
+response = requests.delete(url, headers=headers)
+if response.status_code == 200:
+    data = response.json()
+    if data.get("success"):
+        print("Deleted successfully")
+    else:
+        print("Error:", data)
+else:
+    print("Error:", response.text)
+```
+
+### `/api/reverse-share`
+#### Method: `POST`
+#### Description:
+Creates a new reverse share.
+
+#### Request Headers
+- `x-api-token`: API authentication token.
+
+#### Request Body
+- `callbackUrl` (optional): URL to be called after the file is uploaded.
+
+#### Response
+- **Success**:
+```json
+{
+  "success": true,
+  "url": "<reverse_share_url>"
+}
+```
+- **Failure**:
+```json
+{
+  "success": false,
+  "message": "Error message"
+}
+```
+
+#### Example Requests
+##### `curl`
+```sh
+curl -X POST http://localhost:3000/api/reverse-share \
+  -H "x-api-token: YOUR_API_TOKEN" \
+  -d '{"callbackUrl": "https://example.com/callback"}'
+```
+
+##### Python
+```python
+import requests
+
+url = "http://localhost:3000/api/reverse-share"
+headers = {"x-api-token": "YOUR_API_TOKEN"}
+data = {"callbackUrl": "https://example.com/callback"}
+
+response = requests.post(url, headers=headers, json=data)
+if response.status_code == 200:
+    data = response.json()
+    if data.get("success"):
+        print("Reverse share created successfully:", data["url"])
+    else:
+        print("Error:", data)
+else:
+    print("Error:", response.text)
+```
+
+### `/api/list`
+#### Method: `GET`
+#### Description:
+Lists all uploaded files.
+
+#### Request Headers
+- `x-api-token`: API authentication token.
+
+#### Response
+- **Success**:
+```json
+{
+  "success": true,
+  "uploads": [<file_objects>]
 }
 ```
 - **Failure**:
@@ -247,10 +398,10 @@ else:
     print("Error:", response.text)
 ```
 
-### `/api/list/r`
+### `/api/list/reverse-shares`
 #### Method: `GET`
 #### Description:
-Returns a list of all reverse shares.
+Lists all reverse shares.
 
 #### Request Headers
 - `x-api-token`: API authentication token.
@@ -260,13 +411,7 @@ Returns a list of all reverse shares.
 ```json
 {
   "success": true,
-  "reverseShares": [
-    {
-      "hash": "<hash>",
-      "createdAt": "<createdAt>",
-      "used": <true/false>
-    }
-  ]
+  "uploads": [<reverse_share_objects>]
 }
 ```
 - **Failure**:
@@ -280,7 +425,7 @@ Returns a list of all reverse shares.
 #### Example Requests
 ##### `curl`
 ```sh
-curl -X GET http://localhost:3000/api/list/r \
+curl -X GET http://localhost:3000/api/list/reverse-shares \
   -H "x-api-token: YOUR_API_TOKEN"
 ```
 
@@ -288,129 +433,16 @@ curl -X GET http://localhost:3000/api/list/r \
 ```python
 import requests
 
-url = "http://localhost:3000/api/list/r"
+url = "http://localhost:3000/api/list/reverse-shares"
 headers = {"x-api-token": "YOUR_API_TOKEN"}
 
 response = requests.get(url, headers=headers)
 if response.status_code == 200:
     data = response.json()
     if data.get("success"):
-        print("Reverse Shares:", data["reverseShares"])
+        print("Reverse Shares:", data["uploads"])
     else:
         print("Error:", data)
 else:
     print("Error:", response.text)
 ```
-
-### `/api/reverse-share/:hash/status`
-#### Method: `GET`
-#### Description:
-Fetches the status of a reverse share.
-
-#### Request Headers
-- `x-api-token`: API authentication token.
-
-#### Response
-- **Success**:
-```json
-{
-  "success": true,
-  "used": false,
-  "filename": "example.txt",
-  "fileUrl": "https://your-domain/example-hash/example.txt",
-  "uploadedAt": "2025-06-17T11:00:00.000Z",
-  "createdAt": "2025-06-17T10:00:00.000Z",
-  "callbackUrl": "https://example.com/webhook"
-}
-```
-- **Failure**:
-```json
-{
-  "success": false,
-  "message": "Error message"
-}
-```
-
-#### Example Requests
-##### `curl`
-```sh
-curl -X GET https://your-domain/api/reverse-share/example-hash/status \
-  -H "x-api-token: YOUR_API_TOKEN"
-```
-
-##### Python
-```python
-import requests
-
-url = "https://your-domain/api/reverse-share/example-hash/status"
-headers = {"x-api-token": "YOUR_API_TOKEN"}
-
-response = requests.get(url, headers=headers)
-if response.status_code == 200:
-    data = response.json()
-    if data.get("success"):
-        print("Reverse Share Status:", data)
-    else:
-        print("Error:", data)
-else:
-    print("Error:", response.text)
-```
-
-### Reverse Shares
-Reverse shares allow one-time file uploads via a special link. This feature is particularly useful for receiving files from other users without granting them full access to the platform.
-
-#### Create a Reverse Share
-##### `curl`
-```sh
-curl -X POST https://<DOMAIN>/api/reverse-share \
-  -H "x-api-token: YOUR_API_TOKEN"
-```
-
-##### Python
-```python
-import requests
-
-url = "https://<DOMAIN>/api/reverse-share"
-headers = {"x-api-token": "YOUR_API_TOKEN"}
-
-response = requests.post(url, headers=headers)
-if response.status_code == 200:
-    data = response.json()
-    if data.get("success"):
-        print("Reverse share created successfully:", data["url"])
-    else:
-        print("Error:", data)
-else:
-    print("Error:", response.text)
-```
-
-#### Use a Reverse Share
-1. Open the generated reverse share link.
-2. Drag and drop the file into the upload area or select it manually.
-3. The file will be uploaded, and a download link will be displayed.
-
-#### Delete a Reverse Share
-##### `curl`
-```sh
-curl -X DELETE https://<DOMAIN>/api/delete/r/<HASH> \
-  -H "x-api-token: YOUR_API_TOKEN"
-```
-
-##### Python
-```python
-import requests
-
-url = "https://<DOMAIN>/api/delete/r/<HASH>"
-headers = {"x-api-token": "YOUR_API_TOKEN"}
-
-response = requests.delete(url, headers=headers)
-if response.status_code == 200:
-    data = response.json()
-    if data.get("success"):
-        print("Reverse share deleted successfully")
-    else:
-        print("Error:", data)
-else:
-    print("Error:", response.text)
-```
-

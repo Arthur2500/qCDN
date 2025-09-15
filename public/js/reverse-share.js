@@ -55,7 +55,6 @@ document.addEventListener("DOMContentLoaded", function () {
       fileInput.value = "";
 
       if (xhr.status === 200) {
-        // Antwort ist gerenderte HTML-Seite
         document.open();
         document.write(xhr.responseText);
         document.close();

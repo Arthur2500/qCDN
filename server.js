@@ -61,7 +61,7 @@ function extractScriptDomains(headTags) {
     if (src) {
       try {
         const url = new URL(src);
-        scriptDomains.add(`${url.protocol}//${url.host}`);
+        scriptDomains.add(`${url.protocol}://${url.host}`);
       } catch (err) {
         console.error(`Invalid URL in HEAD_TAGS: ${src}`);
       }
@@ -182,14 +182,21 @@ function saveDB() {
 
 loadDB();
 
-// Migrate DB
 if (!db.reverseShares) {
   db.reverseShares = [];
   saveDB();
 }
 
-function generateReverseShareHash() {
-  return crypto.randomBytes(16).toString("hex");
+
+function generateUniqueHash() {
+  loadDB();
+  let hash;
+  let exists = true;
+  while (exists) {
+    hash = crypto.randomBytes(16).toString("hex");
+    exists = db.files.some(f => f.hash === hash) || db.reverseShares.some(r => r.hash === hash);
+  }
+  return hash;
 }
 
 function isAuthenticated(req, res, next) {
@@ -269,7 +276,7 @@ function createUploadHandler() {
       cb(null, UPLOAD_DIR);
     },
     filename: (req, file, cb) => {
-      const hash = crypto.randomBytes(16).toString("hex");
+      const hash = generateUniqueHash();
       const filename = `${hash}-${file.originalname}`;
       generatedFilename = filename;
       cb(null, filename);
@@ -325,30 +332,35 @@ app.post("/upload", isAuthenticated, createUploadHandler(), (req, res) => {
   return res.json({ success: true, url: fileURL });
 });
 
-app.delete("/delete/:hash", isAuthenticated, (req, res) => {
+app.delete("/:hash", isAuthenticated, (req, res) => {
   loadDB();
   const { hash } = req.params;
   const fileIndex = db.files.findIndex((f) => f.hash === hash);
-  if (fileIndex === -1) {
-    return res.status(404).json({ success: false, message: "Not found" });
+  if (fileIndex !== -1) {
+    const fileToDelete = db.files[fileIndex];
+    const filePath = path.join(UPLOAD_DIR, fileToDelete.savedFilename);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      console.log(`File deleted: ${fileToDelete.originalName}, Path: ${filePath}`);
+    }
+    db.files.splice(fileIndex, 1);
+    saveDB();
+    return res.json({ success: true, type: "file" });
   }
-
-  const fileToDelete = db.files[fileIndex];
-  const filePath = path.join(UPLOAD_DIR, fileToDelete.savedFilename);
-
-  if (fs.existsSync(filePath)) {
-    fs.unlinkSync(filePath);
-    console.log(`File deleted: ${fileToDelete.originalName}, Path: ${filePath}`);
+  const reverseShareIndex = db.reverseShares.findIndex((share) => share.hash === hash);
+  if (reverseShareIndex !== -1) {
+    const reverseShare = db.reverseShares[reverseShareIndex];
+    db.reverseShares.splice(reverseShareIndex, 1);
+    saveDB();
+    console.log(`Reverse share deleted: ${reverseShare.hash}`);
+    return res.json({ success: true, type: "reverse-share" });
   }
-  db.files.splice(fileIndex, 1);
-  saveDB();
-
-  return res.json({ success: true });
+  return res.status(404).json({ success: false, message: "Not found" });
 });
 
 app.post("/reverse-share", isAuthenticated, (req, res) => {
   loadDB();
-  const hash = generateReverseShareHash();
+  const hash = generateUniqueHash();
   db.reverseShares.push({
     hash,
     createdAt: new Date().toISOString(),
@@ -429,7 +441,6 @@ app.post('/:hash', createUploadHandler(), async (req, res) => {
 
   db.files.push(fileEntry);
 
-  // Update reverse share
   reverseShare.used = true;
   reverseShare.uploadedAt = fileEntry.uploadedAt;
   reverseShare.filename = originalName;
@@ -448,24 +459,6 @@ app.post('/:hash', createUploadHandler(), async (req, res) => {
   });
 });
 
-app.delete('/delete/r/:hash', isAuthenticated, (req, res) => {
-  loadDB();
-  const { hash } = req.params;
-  const reverseShareIndex = db.reverseShares.findIndex((share) => share.hash === hash);
-
-  if (reverseShareIndex === -1) {
-    return res.status(404).json({ success: false, message: 'Reverse share not found' });
-  }
-
-  const reverseShare = db.reverseShares[reverseShareIndex];
-
-  db.reverseShares.splice(reverseShareIndex, 1);
-  saveDB();
-
-  console.log(`Reverse share deleted: ${reverseShare.hash}`);
-  return res.json({ success: true });
-});
-
 if (API_ENABLED) {
   if (securityEnabled) {
     app.use("/api", apiLimiter);
@@ -476,12 +469,10 @@ if (API_ENABLED) {
     if (!req.file) {
       return res.status(400).json({ success: false, message: "No file provided" });
     }
-
     const savedFilename = req.file.filename;
     const [hash, ...rest] = savedFilename.split("-");
     const originalName = rest.join("-");
     const fileSize = req.file.size;
-
     db.files.push({
       hash,
       originalName,
@@ -490,61 +481,56 @@ if (API_ENABLED) {
       uploadedAt: new Date().toISOString(),
     });
     saveDB();
-
-    const fileURL = `https://${DOMAIN}/${hash}/${encodeURIComponent(originalName)}`;
-    console.log(`API: File uploaded: ${originalName}, URL: ${fileURL}`);
+    const fileURL = `${PROTOCOL}://${DOMAIN}/${hash}/${encodeURIComponent(originalName)}`;
     return res.json({ success: true, url: fileURL });
   });
 
-  app.delete("/api/delete/:hash", isApiAuthenticated, (req, res) => {
+  app.delete("/api/:hash", isApiAuthenticated, (req, res) => {
     loadDB();
     const { hash } = req.params;
     const fileIndex = db.files.findIndex((f) => f.hash === hash);
-    if (fileIndex === -1) {
-      return res.status(404).json({ success: false, message: "Not found" });
+    if (fileIndex !== -1) {
+      const fileToDelete = db.files[fileIndex];
+      const filePath = path.join(UPLOAD_DIR, fileToDelete.savedFilename);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+      db.files.splice(fileIndex, 1);
+      saveDB();
+      return res.json({ success: true, type: "file" });
     }
-
-    const fileToDelete = db.files[fileIndex];
-    const filePath = path.join(UPLOAD_DIR, fileToDelete.savedFilename);
-
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-      console.log(`API: File deleted: ${fileToDelete.originalName}, Path: ${filePath}`);
+    const reverseShareIndex = db.reverseShares.findIndex((share) => share.hash === hash);
+    if (reverseShareIndex !== -1) {
+      db.reverseShares.splice(reverseShareIndex, 1);
+      saveDB();
+      return res.json({ success: true, type: "reverse-share" });
     }
-    db.files.splice(fileIndex, 1);
-    saveDB();
-
-    return res.json({ success: true });
+    return res.status(404).json({ success: false, message: "Not found" });
   });
 
   app.post("/api/reverse-share", isApiAuthenticated, (req, res) => {
     loadDB();
-    const hash = generateReverseShareHash();
-    const callbackUrl = req.body.callbackUrl || null;
-
+    const hash = generateUniqueHash();
     db.reverseShares.push({
       hash,
       createdAt: new Date().toISOString(),
       used: false,
-      callbackUrl,
+      callbackUrl: req.body.callbackUrl || null,
       uploadedAt: null,
       filename: null,
       fileUrl: null
     });
-
     saveDB();
     return res.json({ success: true, url: `${PROTOCOL}://${DOMAIN}/${hash}` });
   });
 
-  app.get('/api/reverse-share/:hash/status', isApiAuthenticated, (req, res) => {
+  app.get("/api/:hash", isApiAuthenticated, (req, res) => {
     loadDB();
     const { hash } = req.params;
     const reverseShare = db.reverseShares.find((e) => e.hash === hash);
-
     if (!reverseShare) {
-      return res.status(404).json({ success: false, message: 'Not found' });
+      return res.status(404).json({ success: false, message: "Not found" });
     }
-
     return res.json({
       success: true,
       used: reverseShare.used,
@@ -556,22 +542,49 @@ if (API_ENABLED) {
     });
   });
 
-  app.delete('/api/delete/r/:hash', isApiAuthenticated, (req, res) => {
+  app.post("/api/:hash", createUploadHandler(), (req, res) => {
     loadDB();
     const { hash } = req.params;
-    const reverseShareIndex = db.reverseShares.findIndex((share) => share.hash === hash);
-
-    if (reverseShareIndex === -1) {
-      return res.status(404).json({ success: false, message: 'Reverse share not found' });
+    const reverseShare = db.reverseShares.find((e) => e.hash === hash && !e.used);
+    if (!reverseShare) {
+      return res.status(410).json({ success: false, message: "Gone or invalid" });
     }
-
-    const reverseShare = db.reverseShares[reverseShareIndex];
-
-    db.reverseShares.splice(reverseShareIndex, 1);
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "No file provided" });
+    }
+    const savedFilename = req.file.filename;
+    const [fileHash, ...rest] = savedFilename.split("-");
+    const originalName = rest.join("-");
+    const fileSize = req.file.size;
+    const fileEntry = {
+      hash: fileHash,
+      originalName,
+      savedFilename,
+      size: fileSize,
+      uploadedAt: new Date().toISOString(),
+    };
+    db.files.push(fileEntry);
+    reverseShare.used = true;
+    reverseShare.uploadedAt = fileEntry.uploadedAt;
+    reverseShare.filename = originalName;
+    reverseShare.fileUrl = `${PROTOCOL}://${DOMAIN}/${fileHash}/${encodeURIComponent(originalName)}`;
     saveDB();
+    return res.json({
+      success: true,
+      fileUrl: reverseShare.fileUrl,
+      filename: reverseShare.filename,
+      uploadedAt: reverseShare.uploadedAt,
+    });
+  });
 
-    console.log(`API: Reverse share deleted: ${reverseShare.hash}`);
-    return res.json({ success: true });
+  app.get("/api/list", isApiAuthenticated, (req, res) => {
+    loadDB();
+    return res.json({ success: true, uploads: db.files });
+  });
+
+  app.get("/api/list/reverse-shares", isApiAuthenticated, (req, res) => {
+    loadDB();
+    return res.json({ success: true, uploads: db.reverseShares });
   });
 } else {
   console.log("API is disabled due to missing or invalid API_KEYS.");
