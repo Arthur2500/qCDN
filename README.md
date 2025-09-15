@@ -194,7 +194,59 @@ else:
     print("Error:", response.text)
 ```
 
-### `/api/:hash`
+#### Method: `GET`
+#### Description:
+Retrieves information about a reverse share by its hash.
+
+#### Request Headers
+- `x-api-token`: API authentication token.
+
+#### Response
+- **Success**:
+```json
+{
+  "success": true,
+  "used": true | false,
+  "filename": "<filename>",
+  "fileUrl": "<file_url>",
+  "uploadedAt": "<timestamp>",
+  "createdAt": "<timestamp>",
+  "callbackUrl": "<callback_url>"
+}
+```
+- **Failure**:
+```json
+{
+  "success": false,
+  "message": "Error message"
+}
+```
+
+#### Example Requests
+##### `curl`
+```sh
+curl -X GET http://localhost:3000/api/<hash> \
+  -H "x-api-token: YOUR_API_TOKEN"
+```
+
+##### Python
+```python
+import requests
+
+url = "http://localhost:3000/api/<hash>"
+headers = {"x-api-token": "YOUR_API_TOKEN"}
+
+response = requests.get(url, headers=headers)
+if response.status_code == 200:
+    data = response.json()
+    if data.get("success"):
+        print("Reverse share details:", data)
+    else:
+        print("Error:", data)
+else:
+    print("Error:", response.text)
+```
+
 #### Method: `DELETE`
 #### Description:
 Allows authenticated users to delete an uploaded file or reverse share by hash.
@@ -394,4 +446,3 @@ if response.status_code == 200:
 else:
     print("Error:", response.text)
 ```
-
