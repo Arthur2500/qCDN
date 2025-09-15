@@ -180,7 +180,7 @@ document.addEventListener("DOMContentLoaded", function () {
   deleteBtns.forEach(btn => {
     btn.addEventListener("click", (e) => {
       const hash = e.target.dataset.hash;
-      fetch(`/delete/${hash}`, { method: "DELETE" })
+      fetch(`/${hash}`, { method: "DELETE" })
         .then(response => response.json())
         .then(data => {
           if (data.success) {
@@ -213,7 +213,7 @@ document.addEventListener("DOMContentLoaded", function () {
   deleteReverseBtns.forEach(btn => {
     btn.addEventListener("click", (e) => {
       const hash = e.target.dataset.hash;
-      fetch(`/delete/r/${hash}`, { method: "DELETE" })
+      fetch(`/${hash}`, { method: "DELETE" })
         .then(response => response.json())
         .then(data => {
           if (data.success) {
