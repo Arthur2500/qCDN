@@ -593,16 +593,56 @@ if (API_ENABLED) {
 app.get("/:hash/:filename", (req, res) => {
   loadDB();
   const { hash, filename } = req.params;
+
   const fileEntry = db.files.find((f) => f.hash === hash && f.originalName === filename);
-  if (!fileEntry) {
-    return res.status(404).send("File not found");
-  }
+  if (!fileEntry) return res.status(404).send("File not found");
 
   const filePath = path.join(UPLOAD_DIR, fileEntry.savedFilename);
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).send("File no longer exists");
+  if (!fs.existsSync(filePath)) return res.status(404).send("File no longer exists");
+
+  const stat = fs.statSync(filePath);
+  const fileSize = stat.size;
+  const range = req.headers.range;
+
+  // set correct content type
+  const ext = path.extname(filename).toLowerCase();
+  const mime = {
+    ".mp4": "video/mp4",
+    ".webm": "video/webm",
+    ".mov": "video/quicktime",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".gif": "image/gif"
+  }[ext] || "application/octet-stream";
+
+  if (range) {
+    // Partial content (Range request)
+    const parts = range.replace(/bytes=/, "").split("-");
+    const start = parseInt(parts[0], 10);
+    const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+
+    const chunkSize = end - start + 1;
+    const file = fs.createReadStream(filePath, { start, end });
+
+    res.writeHead(206, {
+      "Content-Range": `bytes ${start}-${end}/${fileSize}`,
+      "Accept-Ranges": "bytes",
+      "Content-Length": chunkSize,
+      "Content-Type": mime,
+    });
+
+    file.pipe(res);
+  } else {
+    // Full content
+    res.writeHead(200, {
+      "Content-Length": fileSize,
+      "Content-Type": mime,
+      "Accept-Ranges": "bytes",
+    });
+
+    fs.createReadStream(filePath).pipe(res);
   }
-  return res.sendFile(filePath);
 });
 
 app.use((req, res) => {
