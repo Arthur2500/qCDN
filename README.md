@@ -82,6 +82,8 @@ node server.js
 - `USE_HTTPS`: If `true`, uses HTTPS protocol
 - `DOMAIN`: Server domain name
 - `PORT`: Port if run locally
+- `TRUST_PROXY` (optional): Express `trust proxy` setting (`true`, `false`, a hop count such as `1`, or a list of trusted proxy addresses). Defaults to `1` when `USE_HTTPS=true` (TLS-terminating reverse proxy in front) and `false` otherwise. Only enable it when a reverse proxy is in front of qCDN, otherwise clients can spoof their IP and bypass rate limiting.
+- `MAX_FILE_SIZE_MB` (optional): Maximum size of a single upload in megabytes. Unset or `0` means unlimited.
 
 ## Screenshots
 ![Screenshot 1](https://github.com/user-attachments/assets/1b613775-4f23-404c-adde-f0ac2d70970f)

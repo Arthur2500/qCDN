@@ -12,7 +12,22 @@ const cheerio = require("cheerio");
 
 const app = express();
 
-app.set("trust proxy", 1);
+// Only trust X-Forwarded-* headers when a reverse proxy is actually in front of
+// the app. Otherwise clients could spoof X-Forwarded-For and get a fresh
+// rate-limit bucket on every request. qCDN itself only speaks plain HTTP, so
+// USE_HTTPS=true implies a TLS-terminating proxy; TRUST_PROXY overrides this.
+function parseTrustProxy(value) {
+  if (value === undefined || value.trim() === "") {
+    return process.env.USE_HTTPS === "true" ? 1 : false;
+  }
+  const v = value.trim();
+  if (v.toLowerCase() === "true") return true;
+  if (v.toLowerCase() === "false") return false;
+  if (/^\d+$/.test(v)) return parseInt(v, 10);
+  return v; // e.g. "loopback" or a comma-separated list of subnets
+}
+
+app.set("trust proxy", parseTrustProxy(process.env.TRUST_PROXY));
 
 const securityEnabled = process.env.SECURITY === "enabled";
 
@@ -48,6 +63,13 @@ const HEAD_TAGS = (process.env.HEAD_TAGS || "")
 const API_ENABLED = API_KEYS.length > 0 && API_KEYS[0].toLowerCase() !== "none";
 
 const SESSION_SECRET = process.env.SESSION_SECRET || "CHANGE_THIS_TO_A_LONG_RANDOM_STRING";
+
+// Optional per-file upload limit in megabytes; unset or 0 means unlimited.
+const MAX_FILE_SIZE_MB = parseFloat(process.env.MAX_FILE_SIZE_MB || "0");
+const MAX_FILE_SIZE =
+  Number.isFinite(MAX_FILE_SIZE_MB) && MAX_FILE_SIZE_MB > 0
+    ? Math.floor(MAX_FILE_SIZE_MB * 1024 * 1024)
+    : undefined;
 
 function passThrough(req, res, next) {
   return next();
@@ -105,6 +127,14 @@ const apiLimiter = securityEnabled
       windowMs: 15 * 60 * 1000,
       max: 50,
       message: "Too many API requests, please try again later.",
+    })
+  : passThrough;
+
+const reverseShareUploadLimiter = securityEnabled
+  ? rateLimit({
+      windowMs: 15 * 60 * 1000,
+      max: 50,
+      message: "Too many upload attempts, please try again later.",
     })
   : passThrough;
 
@@ -268,9 +298,24 @@ app.get("/api-docs", isAuthenticated, (req, res) => {
   });
 });
 
-function createUploadHandler() {
-  let generatedFilename = null;
+// Removes the file written for this request (if any). The filename is tracked
+// per request so that one request can never delete another request's upload.
+function discardUpload(req) {
+  const savedFilename = req.qcdnSavedFilename;
+  if (!savedFilename) return;
+  req.qcdnSavedFilename = null;
+  const filePath = path.join(UPLOAD_DIR, savedFilename);
+  try {
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      console.log(`Discarded upload: ${filePath}`);
+    }
+  } catch (err) {
+    console.error(`Failed to discard upload ${filePath}: ${err.message}`);
+  }
+}
 
+function createUploadHandler() {
   const storage = multer.diskStorage({
     destination: (req, file, cb) => {
       cb(null, UPLOAD_DIR);
@@ -278,32 +323,51 @@ function createUploadHandler() {
     filename: (req, file, cb) => {
       const hash = generateUniqueHash();
       const filename = `${hash}-${file.originalname}`;
-      generatedFilename = filename;
+      req.qcdnSavedFilename = filename;
       cb(null, filename);
     },
   });
 
+  const limits = { files: 1 };
+  if (MAX_FILE_SIZE) {
+    limits.fileSize = MAX_FILE_SIZE;
+  }
+
   const localUpload = multer({
     storage,
+    limits,
   }).single("file");
 
   return function (req, res, next) {
     req.on("aborted", () => {
-      if (generatedFilename) {
-        const partialPath = path.join(UPLOAD_DIR, generatedFilename);
-        if (fs.existsSync(partialPath)) {
-          fs.unlinkSync(partialPath);
-          console.log(`Aborted upload deleted: ${partialPath}`);
-        }
-      }
+      discardUpload(req);
     });
 
     localUpload(req, res, (err) => {
       if (err) {
+        discardUpload(req);
         return res.status(400).json({ success: false, message: err.message });
       }
       next();
     });
+  };
+}
+
+function findOpenReverseShare(hash) {
+  loadDB();
+  return db.reverseShares.find((e) => e.hash === hash && !e.used);
+}
+
+// Rejects uploads to unknown or already used reverse shares before any bytes
+// are written to disk.
+function requireOpenReverseShare(respondWithJson) {
+  return function (req, res, next) {
+    if (!findOpenReverseShare(req.params.hash)) {
+      return respondWithJson
+        ? res.status(410).json({ success: false, message: "Gone or invalid" })
+        : res.status(410).send("Gone or invalid");
+    }
+    next();
   };
 }
 
@@ -413,12 +477,13 @@ app.get("/:hash", (req, res) => {
   });
 });
 
-app.post('/:hash', createUploadHandler(), async (req, res) => {
-  loadDB();
+app.post('/:hash', reverseShareUploadLimiter, requireOpenReverseShare(false), createUploadHandler(), async (req, res) => {
   const { hash } = req.params;
-  const reverseShare = db.reverseShares.find((e) => e.hash === hash && !e.used);
+  // Re-check after the upload: a concurrent request may have used the share.
+  const reverseShare = findOpenReverseShare(hash);
 
   if (!reverseShare) {
+    discardUpload(req);
     return res.status(410).send('Gone or invalid');
   }
 
@@ -485,11 +550,12 @@ if (API_ENABLED) {
     return res.json({ success: true, url: fileURL });
   });
 
-  app.post("/api/upload/:hash", createUploadHandler(), (req, res) => {
-    loadDB();
+  app.post("/api/upload/:hash", requireOpenReverseShare(true), createUploadHandler(), (req, res) => {
     const { hash } = req.params;
-    const reverseShare = db.reverseShares.find((e) => e.hash === hash && !e.used);
+    // Re-check after the upload: a concurrent request may have used the share.
+    const reverseShare = findOpenReverseShare(hash);
     if (!reverseShare) {
+      discardUpload(req);
       return res.status(410).json({ success: false, message: "Gone or invalid" });
     }
     if (!req.file) {
